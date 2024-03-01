@@ -1,0 +1,63 @@
+﻿<#@ template language="C#" #>
+<#@ import namespace="System.Linq" #>
+<#
+    string GetFriendlyName(Type type)
+    {
+        if (type == typeof(int))
+            return "int";
+        else if (type == typeof(char))
+            return "char";
+        else if (type == typeof(bool)) 
+            return "bool";
+        else if (type == typeof(uint))
+            return "uint";
+        else if (type == typeof(float))
+            return "float";
+        else if (type == typeof(double))
+            return "double";
+        else if (type == typeof(string))
+            return "string";
+        else
+            return type.Name;
+    }
+#>
+<#@ output extension=".cs" #>
+namespace Xnb.Reader.ContentReader;
+
+<#
+    var unmanagedType = new[] { typeof(bool), typeof(double), typeof(int), typeof(float), typeof(uint) };
+    var specialType = new[] { typeof(char), typeof(string) };
+    foreach (var type in unmanagedType)
+    {
+        string friendlyName = GetFriendlyName(type);
+#>
+public class <#=type.Name#>Reader: UnmanagedReader<<#=friendlyName#>>;
+<#
+    }
+    foreach (var type in specialType)
+    {
+        string friendlyName = GetFriendlyName(type);
+#>
+public class <#=type.Name#>Reader: BaseReader<<#=friendlyName#>>
+{
+    public override <#=friendlyName#> Read(BinaryReader buffer) => buffer.Read<#=type.Name#>();
+    public override void Write(BinaryWriter buffer, <#=friendlyName#> content) => buffer.Write(content);
+}
+<#
+    }
+#>
+
+public static partial class ReaderResolver
+{
+    static partial void RegisterPrimitiveReaders()
+    {
+<#
+    foreach (var type in unmanagedType.Concat(specialType))
+    {
+#>
+        Register(new <#=type.Name#>Reader());
+<#
+    }
+#>
+    }
+}
