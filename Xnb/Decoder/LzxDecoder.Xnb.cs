@@ -96,6 +96,11 @@ internal class LzxDecoderStream : Stream
     {
         return decompressedStream.Read(buffer, offset, count);
     }
+    
+    public override int Read(Span<byte> buffer)
+    {
+        return decompressedStream.Read(buffer);
+    }
 
     public override bool CanRead => true;
 
