@@ -12,14 +12,12 @@ From the original README:
 
 
 ## Special features
-- Support unpacking through reflection and source generator (soon to be fully source generated for NativeAOT-friendly).
+- Support unpacking through source generator (which means it is NativeAOT-friendly, sort of).
 - High performance extraction.
 - Support extracting POCO (Plain Old C# Object) data from Stardew Valley 1.4 above.
 
 ## TODO
-- Convert to fully source generated.
 - Support packing, though a bit unnecessary because of SMAPI.
 - Support packing and unpacking in parallel.
 - Support XACT (seriously, why?)
-- Reduce memory leak to minimal.
 - More refactoring because the code is extremely messy.
