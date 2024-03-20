@@ -1,4 +1,6 @@
-﻿// MonoGame - Copyright (C) MonoGame Foundation, Inc
+﻿// Taken from MonoGame
+
+// MonoGame - Copyright (C) MonoGame Foundation, Inc
 // This file is subject to the terms and conditions defined in
 // file 'LICENSE.txt', which is part of this source code package.
 
@@ -8,10 +10,9 @@ namespace Xnb.Decoder;
 
 internal class LzxDecoderStream : Stream
 {
+    private static readonly RecyclableMemoryStreamManager Manager = new();
     private LzxDecoder dec;
     private RecyclableMemoryStream decompressedStream;
-    
-    private static readonly RecyclableMemoryStreamManager Manager = new();
 
     public LzxDecoderStream(Stream input, int decompressedSize, int compressedSize)
     {
@@ -29,7 +30,7 @@ internal class LzxDecoderStream : Stream
         decompressedStream = Manager.GetStream();
         long startPos = stream.Position;
         long pos = startPos;
-            
+
         while (pos - startPos < compressedSize)
         {
             // the compressed stream is seperated into blocks that will decompress
@@ -44,6 +45,7 @@ internal class LzxDecoderStream : Stream
             int lo = stream.ReadByte();
             int blockSize = (hi << 8) | lo;
             int frameSize = 0x8000; // frame size is 32Kb by default
+
             // does this block define a frame size?
             if (hi == 0xFF)
             {
@@ -56,11 +58,15 @@ internal class LzxDecoderStream : Stream
                 pos += 5;
             }
             else
+            {
                 pos += 2;
+            }
 
             // either says there is nothing to decode
             if (blockSize == 0 || frameSize == 0)
+            {
                 break;
+            }
 
             dec.Decompress(stream, blockSize, decompressedStream, frameSize);
             pos += blockSize;
@@ -81,26 +87,21 @@ internal class LzxDecoderStream : Stream
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if(disposing)
-        {                
+
+        if (disposing)
+        {
             decompressedStream.Dispose();
             dec.Dispose();
-        }            
+        }
+
         dec = null;
         decompressedStream = null;
     }
 
 #region Stream internals
+    public override int Read(byte[] buffer, int offset, int count) => decompressedStream.Read(buffer, offset, count);
 
-    public override int Read(byte[] buffer, int offset, int count)
-    {
-        return decompressedStream.Read(buffer, offset, count);
-    }
-    
-    public override int Read(Span<byte> buffer)
-    {
-        return decompressedStream.Read(buffer);
-    }
+    public override int Read(Span<byte> buffer) => decompressedStream.Read(buffer);
 
     public override bool CanRead => true;
 
@@ -120,21 +121,16 @@ internal class LzxDecoderStream : Stream
         set => throw new NotSupportedException();
     }
 
-
-    public override long Seek(long offset, SeekOrigin origin)
-    {
-        throw new NotImplementedException();
-    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
     public override void SetLength(long value)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
-
 #endregion
 }

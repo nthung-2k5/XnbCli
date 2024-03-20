@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Xnb\Xnb.csproj" />
+        <ProjectReference Include="..\Xnb\Xnb.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="DotMake.CommandLine" Version="1.8.3" />
+        <PackageReference Include="DotMake.CommandLine" Version="1.8.3"/>
     </ItemGroup>
 
 </Project>

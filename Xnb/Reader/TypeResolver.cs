@@ -6,11 +6,16 @@ namespace Xnb.Reader;
 
 public static partial class TypeResolver
 {
+    private static readonly Regex TypeSplit = TypeSplitRegex();
+
+    private static readonly Regex TypeInfoSplit = TypeInfoSplitRegex();
+
     public static bool IsSubclassOfRawGeneric(this Type toCheck, Type baseType)
     {
         while (toCheck is not null && toCheck != typeof(object))
         {
             var cur = toCheck.IsGenericType ? toCheck.GetGenericTypeDefinition() : toCheck;
+
             if (baseType == cur)
             {
                 return true;
@@ -21,6 +26,7 @@ public static partial class TypeResolver
 
         return false;
     }
+
     public static string SimplifyType(string type)
     {
         var parsed = ParseType(type);
@@ -179,53 +185,16 @@ public static partial class TypeResolver
             List<ConcessionItemData>
             Dictionary<string, MovieData>
         */
-        
-        switch (simple)
+
+        StringBuilder fullType = new(simple);
+
+        if (parsed.GenericArgs is not null)
         {
-            // xTile TBin
-            case "xTile.Pipeline.TideReader":
-                return "Xnb.Types.TBin";
-
-            // BmFont
-            case "BmFont.XmlSourceReader":
-                return "Xnb.Types.BmFont";
-            
-            // little sorcery, since all readers ends with "Reader" and all readers are not nested class
-            default:
-                simple = simple["Microsoft.Xna.Framework.Content.".Length .. ^"Reader".Length];
-
-                string ns = simple switch
-                            {
-                                "List" => "System.Collections.Generic",
-                                "Dictionary" => "System.Collections.Generic",
-                                _ => "Xnb.Types"
-                            };
-                StringBuilder fullType = new(ns);
-                fullType.Append('.').Append(simple);
-
-                if (parsed.GenericArgs is not null)
-                {
-                    fullType.Append($"`{parsed.GenericArgs.Length}[")
-                            .Append(string.Join(',', parsed.GenericArgs.Select(generic =>
-                            {
-                                if (generic.StartsWith("StardewValley.GameData"))
-                                {
-                                    generic = $"[{generic.Replace("StardewValley.GameData", "Xnb.Types.StardewValley")}, Xnb]";
-                                }
-                                else
-                                {
-                                    generic = $"[{generic}]";
-                                }
-
-                                return generic;
-                            }))).Append(']');
-                }
-                
-                return fullType.ToString();
+            fullType.Append($"`{parsed.GenericArgs.Length}[").AppendJoin(',', parsed.GenericArgs.Select(generic => generic.Replace("StardewValley.GameData", "Xnb.Types.StardewValley"))).Append(']');
         }
+
+        return fullType.ToString();
     }
-    
-    private static string GetReaderBase(string reader) => reader.Replace("Microsoft.Xna.Framework.Content", null).Replace("Reader", null);
 
     private static (string Type, string[] GenericArgs) ParseType(string type)
     {
@@ -233,30 +202,24 @@ public static partial class TypeResolver
         {
             return (type, null);
         }
+
         var res = TypeSplit.Match(type);
-        
+
         string tName = res.Groups["TypeName"].Value;
         string genericArgs = res.Groups["GenericArgs"].Value;
 
         return (tName, ParseSubtypes(genericArgs).ToArray());
     }
-    
+
     private static IEnumerable<string> ParseSubtypes(string types)
     {
         var res = TypeInfoSplit.Matches(types);
-        
         return res.Select(val => val.Groups[1].Value);
     }
-
-    private static string SelectToString<T, TResult>(this IEnumerable<T> source, Func<T, TResult> selector) => string.Join(',', source.Select(selector));
 
     [GeneratedRegex(@"(?<TypeName>.*?)`\d*\[(?<GenericArgs>.*)\]")]
     private static partial Regex TypeSplitRegex();
 
-    private static readonly Regex TypeSplit = TypeSplitRegex();
-    
     [GeneratedRegex(@"\[([^\[\]]*?),(?:[^\[\]]*)\]")]
     private static partial Regex TypeInfoSplitRegex();
-    
-    private static readonly Regex TypeInfoSplit = TypeInfoSplitRegex();
 }

@@ -1,9 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using DotMake.CommandLine;
 using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 using Xnb;
+using XnbCli;
 
 namespace XnbCli;
 
@@ -12,9 +11,9 @@ namespace XnbCli;
 public class XnbCliCommand
 {
     [CliCommand(Description = "Used to unpack XNB files")]
-    public class UnpackCommand: ActionCommand
+    public class UnpackCommand : ActionCommand
     {
-        public override void ProcessFile(string input, string output)
+        protected override void ProcessFile(string input, string output)
         {
             try
             {
@@ -44,11 +43,11 @@ public class XnbCliCommand
             }
         }
     }
-    
+
     [CliCommand(Description = "Used to pack XNB files")]
-    public class PackCommand: ActionCommand
+    public class PackCommand : ActionCommand
     {
-        public override void ProcessFile(string input, string output)
+        protected override void ProcessFile(string input, string output)
         {
             throw new NotImplementedException();
         }

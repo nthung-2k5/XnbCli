@@ -16,23 +16,23 @@ internal static class BinaryReaderExtensions
     public static object ReadPrimitive<T>(this BinaryReader reader)
     {
         return Type.GetTypeCode(typeof(T)) switch
-               {
-                   TypeCode.Boolean => reader.ReadBoolean(),
-                   TypeCode.Char => reader.ReadChar(),
-                   TypeCode.SByte => reader.ReadSByte(),
-                   TypeCode.Byte => reader.ReadByte(),
-                   TypeCode.Int16 => reader.ReadInt16(),
-                   TypeCode.UInt16 => reader.ReadUInt16(),
-                   TypeCode.Int32 => reader.ReadInt32(),
-                   TypeCode.UInt32 => reader.ReadUInt32(),
-                   TypeCode.Int64 => reader.ReadInt64(),
-                   TypeCode.UInt64 => reader.ReadUInt64(),
-                   TypeCode.Single => reader.ReadSingle(),
-                   TypeCode.Double => reader.ReadDouble(),
-                   TypeCode.Decimal => reader.ReadDecimal(),
-                   TypeCode.String => reader.ReadString(),
-                   _ => throw new ArgumentOutOfRangeException()
-               };
+        {
+            TypeCode.Boolean => reader.ReadBoolean(),
+            TypeCode.Char => reader.ReadChar(),
+            TypeCode.SByte => reader.ReadSByte(),
+            TypeCode.Byte => reader.ReadByte(),
+            TypeCode.Int16 => reader.ReadInt16(),
+            TypeCode.UInt16 => reader.ReadUInt16(),
+            TypeCode.Int32 => reader.ReadInt32(),
+            TypeCode.UInt32 => reader.ReadUInt32(),
+            TypeCode.Int64 => reader.ReadInt64(),
+            TypeCode.UInt64 => reader.ReadUInt64(),
+            TypeCode.Single => reader.ReadSingle(),
+            TypeCode.Double => reader.ReadDouble(),
+            TypeCode.Decimal => reader.ReadDecimal(),
+            TypeCode.String => reader.ReadString(),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }
 

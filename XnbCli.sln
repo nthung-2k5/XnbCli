@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbCli", "XnbCli\XnbCli.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xnb", "Xnb\Xnb.csproj", "{6065D7EB-01DB-4B0C-9E5C-7D084B9AF32A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbSerialization.Generator", "XnbSerialization.Generator\XnbSerialization.Generator.csproj", "{989499F9-2BC0-4713-ACFF-50A0B5F01602}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.Generator", "XnbReader.Generator\XnbReader.Generator.csproj", "{989499F9-2BC0-4713-ACFF-50A0B5F01602}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,4 +1,4 @@
-﻿using System.Runtime;
+﻿using System.Diagnostics.CodeAnalysis;
 using DotMake.CommandLine;
 using Serilog;
 using Serilog.Events;
@@ -10,13 +10,13 @@ public abstract class ActionCommand
 {
     [CliArgument(Description = "Input file or folder", ValidationRules = CliValidationRules.ExistingFileOrDirectory)]
     public string Input { get; set; }
-    
+
     [CliArgument(Description = "Output file or folder", Required = false, ValidationRules = CliValidationRules.ExistingFileOrDirectory)]
     public string Output { get; set; }
-    
+
     [CliOption(Description = "Enables debug verbose printing")]
     public bool Debug { get; set; }
-    
+
     [CliOption(Description = "Only prints error messages")]
     public bool Errors { get; set; }
 
@@ -25,27 +25,26 @@ public abstract class ActionCommand
 
     public void Run()
     {
-        var themes = new AnsiConsoleTheme(
-            new Dictionary<ConsoleThemeStyle, string>
-            {
-                [ConsoleThemeStyle.Text] = "\x1b[38;5;0015m",
-                [ConsoleThemeStyle.SecondaryText] = "\x1b[38;5;0007m",
-                [ConsoleThemeStyle.TertiaryText] = "\x1b[38;5;0008m",
-                [ConsoleThemeStyle.Invalid] = "\x1b[38;5;0011m",
-                [ConsoleThemeStyle.Null] = "\x1b[38;5;0027m",
-                [ConsoleThemeStyle.Name] = "\x1b[38;5;0007m",
-                [ConsoleThemeStyle.String] = "\x1b[38;5;0045m",
-                [ConsoleThemeStyle.Number] = "\x1b[38;5;0200m",
-                [ConsoleThemeStyle.Boolean] = "\x1b[38;5;0027m",
-                [ConsoleThemeStyle.Scalar] = "\x1b[38;5;0085m",
-                [ConsoleThemeStyle.LevelVerbose] = "\x1b[38;5;0007m",
-                [ConsoleThemeStyle.LevelDebug] = "\x1b[35;1m",
-                [ConsoleThemeStyle.LevelInformation] = "\x1b[34;1m",
-                [ConsoleThemeStyle.LevelWarning] = "\x1b[38;5;0011m",
-                [ConsoleThemeStyle.LevelError] = "\x1b[31;1m",
-                [ConsoleThemeStyle.LevelFatal] = "\x1b[38;5;1m",
-            });
-        
+        var themes = new AnsiConsoleTheme(new Dictionary<ConsoleThemeStyle, string>
+        {
+            [ConsoleThemeStyle.Text] = "\x1b[38;5;0015m",
+            [ConsoleThemeStyle.SecondaryText] = "\x1b[38;5;0007m",
+            [ConsoleThemeStyle.TertiaryText] = "\x1b[38;5;0008m",
+            [ConsoleThemeStyle.Invalid] = "\x1b[38;5;0011m",
+            [ConsoleThemeStyle.Null] = "\x1b[38;5;0027m",
+            [ConsoleThemeStyle.Name] = "\x1b[38;5;0007m",
+            [ConsoleThemeStyle.String] = "\x1b[38;5;0045m",
+            [ConsoleThemeStyle.Number] = "\x1b[38;5;0200m",
+            [ConsoleThemeStyle.Boolean] = "\x1b[38;5;0027m",
+            [ConsoleThemeStyle.Scalar] = "\x1b[38;5;0085m",
+            [ConsoleThemeStyle.LevelVerbose] = "\x1b[38;5;0007m",
+            [ConsoleThemeStyle.LevelDebug] = "\x1b[35;1m",
+            [ConsoleThemeStyle.LevelInformation] = "\x1b[34;1m",
+            [ConsoleThemeStyle.LevelWarning] = "\x1b[38;5;0011m",
+            [ConsoleThemeStyle.LevelError] = "\x1b[31;1m",
+            [ConsoleThemeStyle.LevelFatal] = "\x1b[38;5;1m"
+        });
+
         var logConf = new LoggerConfiguration().WriteTo.Console(LogEventLevel.Information, "[{Level}] {Message}{NewLine}{Exception}", theme: themes);
 
         if (Debug)
@@ -64,17 +63,17 @@ public abstract class ActionCommand
         Console.WriteLine("\x1b[31;1mFailed\x1b[0m {0}", Failed);
     }
 
-    public void ProcessFiles(string input, string output)
+    private void ProcessFiles([NotNull] string input, string output)
     {
         if (File.Exists(input))
         {
             // get the new extension
             string newExt = Path.GetExtension(input) == ".xnb" ? ".json" : ".xnb";
-            
+
             // output is undefined or is a directory
             if (string.IsNullOrEmpty(output))
             {
-                output = Path.ChangeExtension(input, newExt); 
+                output = Path.ChangeExtension(input, newExt);
             }
             // output is a directory
             else if (Directory.Exists(output))
@@ -97,5 +96,5 @@ public abstract class ActionCommand
         }
     }
 
-    public abstract void ProcessFile(string input, string output);
+    protected abstract void ProcessFile(string input, string output);
 }

@@ -8,15 +8,12 @@ using Xnb.Types.StardewValley.Movies;
 
 namespace Xnb.Reader;
 
-[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(XnbFile))]
-
 [JsonSerializable(typeof(Dictionary<int, string>))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
 [JsonSerializable(typeof(List<string>))]
-
 [JsonSerializable(typeof(ExternalSpriteFont))]
-
 [JsonSerializable(typeof(List<ModFarmType>))]
 [JsonSerializable(typeof(List<ModLanguage>))]
 [JsonSerializable(typeof(List<ConcessionItemData>))]

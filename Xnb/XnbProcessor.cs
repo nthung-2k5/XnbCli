@@ -1,18 +1,17 @@
-﻿using System.Text;
-using K4os.Compression.LZ4;
+﻿using K4os.Compression.LZ4;
 using Serilog;
-using Xnb.Reader.ContentReader;
 using Xnb.Decoder;
-using ReaderResolver = Xnb.Reader.ContentReader.ReaderResolver;
 
 namespace Xnb;
 
 public static class XnbProcessor
 {
-    private const int HIDEF_MASK = 0x1;
-    private const int COMPRESSED_LZ4_MASK = 0x40;
-    private const int COMPRESSED_LZX_MASK = 0x80;
-    private const int XNB_COMPRESSED_PROLOGUE_SIZE = 14;
+    // ReSharper disable InconsistentNaming
+    private const int HiDefMask = 0x1;
+    private const int CompressedLZ4Mask = 0x40;
+    private const int CompressedLZXMask = 0x80;
+    // ReSharper restore InconsistentNaming
+    private const int XnbCompressedPrologueSize = 14;
 
     public static XnbFile Load(string filename)
     {
@@ -24,7 +23,7 @@ public static class XnbProcessor
 
         // validate the XNB file header
         ValidateHeader(buffer, out var header);
-        
+
         // we validated the file successfully
         Log.Information("XNB file validated successfully!");
 
@@ -36,29 +35,29 @@ public static class XnbProcessor
         {
             throw new XnbException("XNB file has been truncated!");
         }
-        
+
         // print out the file size
         Log.Debug("File size: {fileSize} bytes.", fileSize);
 
         var xnb = new XnbFile { Header = header };
         Stream decompressedStream = file;
-        
+
         // if the file is compressed then we need to decompress it
         if (header.Compressed)
         {
             // get the decompressed size
             int decompressedSize = buffer.ReadInt32();
-            
+
             Stream decompressed;
             Log.Debug("Uncompressed size: {decompressedSize} bytes.", decompressedSize);
-            
+
             switch (header.CompressionType)
             {
                 // decompress LZX format
-                case COMPRESSED_LZX_MASK:
+                case CompressedLZXMask:
                 {
                     // decompress the buffer based on the file size
-                    decompressed = new LzxDecoderStream(buffer.BaseStream, decompressedSize, fileSize - XNB_COMPRESSED_PROLOGUE_SIZE);
+                    decompressed = new LzxDecoderStream(buffer.BaseStream, decompressedSize, fileSize - XnbCompressedPrologueSize);
 
                     break;
                 }
@@ -67,24 +66,24 @@ public static class XnbProcessor
                 {
                     byte[] bytes = new byte[decompressedSize];
                     // allocate buffer for LZ4 decode
-                    file.Position = XNB_COMPRESSED_PROLOGUE_SIZE;
+                    file.Position = XnbCompressedPrologueSize;
                     using var trimmed = new MemoryStream();
                     file.CopyTo(trimmed);
                     var trimmedSpan = trimmed.GetBuffer().AsSpan()[..(int)trimmed.Length];
-                
+
                     // decode the trimmed buffer into decompressed buffer
                     LZ4Codec.Decode(trimmedSpan, bytes);
                     decompressed = new MemoryStream(bytes);
                     break;
                 }
             }
-            
+
             buffer.Dispose();
             decompressedStream = decompressed;
         }
 
         buffer = new BinaryReader(decompressedStream);
-        
+
         // Log.Debug("Reading from byte position: {bytePosition}", buffer.BaseStream.Position);
 
         // NOTE: assuming the buffer is now decompressed
@@ -93,7 +92,7 @@ public static class XnbProcessor
         int count = buffer.Read7BitEncodedInt();
         // log how many readers there are
         Log.Debug("Readers: {count}", count);
-        
+
         // a local copy of readers for the export
         xnb.Readers = new XnbReader[count];
 
@@ -122,11 +121,12 @@ public static class XnbProcessor
         }
 
         // create content reader from the first reader and read the content in
-        xnb.Content = ReaderResolver.Read(xnb.Readers[0].Type, buffer)!;
+        //var reader = new TestReader(buffer.BaseStream);
+        //xnb.Content = reader.Read(TypeResolver.SimplifyType(xnb.Readers[0].Type));
 
         // we loaded the XNB file successfully
         Log.Information("Successfuly read XNB file!");
-        
+
         buffer.Dispose();
         return xnb;
     }
@@ -135,13 +135,18 @@ public static class XnbProcessor
     {
         // ensure buffer isn't null
         if (buffer == null)
+        {
             throw new XnbException("Buffer is null");
+        }
 
         // get the magic from the beginning of the file
         char[] magic = buffer.ReadChars(3);
+
         // check to see if the magic is correct
         if (new string(magic) != "XNB")
+        {
             throw new XnbException($"Invalid file magic found, expecting \"XNB\", found \"${magic}\"");
+        }
 
         // debug print that valid XNB magic was found
         Log.Debug("Valid XNB magic found!");
@@ -150,7 +155,8 @@ public static class XnbProcessor
         char target = char.ToLower(buffer.ReadChar());
 
         // read the target platform
-        switch (target) {
+        switch (target)
+        {
             case 'w':
                 Log.Debug("Target platform: Microsoft Windows");
                 break;
@@ -175,7 +181,8 @@ public static class XnbProcessor
         byte formatVersion = buffer.ReadByte();
 
         // read the XNB format version
-        switch (formatVersion) {
+        switch (formatVersion)
+        {
             case 0x3:
                 Log.Debug("XNB Format Version: XNA Game Studio 3.0");
                 break;
@@ -193,16 +200,16 @@ public static class XnbProcessor
         // read the flag bits
         byte flags = buffer.ReadByte();
         // get the HiDef flag
-        bool hidef = (flags & HIDEF_MASK) != 0;
+        bool hidef = (flags & HiDefMask) != 0;
         // get the compressed flag
-        bool compressed = ((flags & COMPRESSED_LZX_MASK) | (flags & COMPRESSED_LZ4_MASK)) != 0;
+        bool compressed = ((flags & CompressedLZXMask) | (flags & CompressedLZ4Mask)) != 0;
         // set the compression type
         // NOTE: probably a better way to do both lines but sticking with this for now
-        int compressionType = (flags & COMPRESSED_LZX_MASK) != 0 ? COMPRESSED_LZX_MASK : (flags & COMPRESSED_LZ4_MASK) != 0 ? COMPRESSED_LZ4_MASK : 0;
+        int compressionType = (flags & CompressedLZXMask) != 0 ? CompressedLZXMask : (flags & CompressedLZ4Mask) != 0 ? CompressedLZ4Mask : 0;
         // debug content information
         Log.Debug($"Content: {(hidef ? "HiDef" : "Reach")}");
         // log compressed state
-        Log.Debug("Compressed: {compressed:l}, {compressionType:l}", compressed, compressionType == COMPRESSED_LZX_MASK ? "LZX" : "LZ4");
+        Log.Debug("Compressed: {compressed:l}, {compressionType:l}", compressed, compressionType == CompressedLZXMask ? "LZX" : "LZ4");
 
         header = new XnbHeader(target, formatVersion, hidef, compressed, compressionType);
     }
