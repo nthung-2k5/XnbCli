@@ -1,6 +1,7 @@
 ﻿using K4os.Compression.LZ4;
 using Serilog;
 using Xnb.Decoder;
+using Xnb.Reader;
 
 namespace Xnb;
 
@@ -121,8 +122,8 @@ public static class XnbProcessor
         }
 
         // create content reader from the first reader and read the content in
-        //var reader = new TestReader(buffer.BaseStream);
-        //xnb.Content = reader.Read(TypeResolver.SimplifyType(xnb.Readers[0].Type));
+        var reader = new ContentReader(buffer.BaseStream);
+        xnb.Content = reader.Read(TypeResolver.SimplifyType(xnb.Readers[0].Type));
 
         // we loaded the XNB file successfully
         Log.Information("Successfuly read XNB file!");
