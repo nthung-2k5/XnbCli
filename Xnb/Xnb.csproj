@@ -21,28 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Reader\ContentReaders\PrimitiveReader.t4">
-            <Generator>TextTemplatingFileGenerator</Generator>
-            <LastGenOutput>PrimitiveReader.cs</LastGenOutput>
-        </None>
-        <None Remove="Reader\ContentReader\ExplicitTypeReader.tt" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Reader\ContentReaders\PrimitiveReader.cs">
-            <AutoGen>True</AutoGen>
-            <DesignTime>True</DesignTime>
-            <DependentUpon>PrimitiveReader.t4</DependentUpon>
-        </Compile>
-        <Compile Remove="Reader\ContentReader\ExplicitTypeReader.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\XnbReader.Generator\XnbReader.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="ClassReader.ExcludeNamespaces.txt" />
     </ItemGroup>
 
 </Project>
