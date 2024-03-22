@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using DotMake.CommandLine;
+﻿using DotMake.CommandLine;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -20,10 +19,10 @@ public abstract class ActionCommand
     [CliOption(Description = "Only prints error messages")]
     public bool Errors { get; set; }
 
-    public int Failed { get; protected set; }
-    public int Success { get; protected set; }
+    protected int Failed { get; set; }
+    protected int Success { get; set; }
 
-    public void Run()
+    public virtual void Run()
     {
         var themes = new AnsiConsoleTheme(new Dictionary<ConsoleThemeStyle, string>
         {
@@ -63,7 +62,7 @@ public abstract class ActionCommand
         Console.WriteLine("\x1b[31;1mFailed\x1b[0m {0}", Failed);
     }
 
-    private void ProcessFiles([NotNull] string input, string output)
+    private void ProcessFiles(string input, string output)
     {
         if (File.Exists(input))
         {

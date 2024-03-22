@@ -14,10 +14,10 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor DisallowAbstract = new(
+    public static readonly DiagnosticDescriptor MustInheritXnbContentReader = new(
         id: "XNBSERI002",
-        title: "ClassReader type must not be abstract or interface",
-        messageFormat: "The ClassReader type '{0}' must not be abstract or interface",
+        title: "ClassReader type does not inherit XnbContentReader",
+        messageFormat: "The ClassReader type '{0}' must inherit XnbContentReader",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

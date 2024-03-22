@@ -26,7 +26,7 @@ public sealed partial class XnbReaderGenerator
         private const string UnsafeTypeRef = "global::System.Runtime.CompilerServices.Unsafe";
         private const string MemoryMarshalTypeRef = "global::System.Runtime.InteropServices.MemoryMarshal";
         private const string BinaryReaderTypeRef = "global::System.IO.BinaryReader";
-        private const string StreamTypeRef = "global::System.IO.Stream";
+        private const string XnbStreamTypeRef = "global::XnbReader.XnbStream";
         private const string EncodingTypeRef = "global::System.Text.Encoding";
         private const string GarbageCollectorTypeRef = "global::System.GC";
         private const string ListTypeRef = "global::System.Collections.Generic.List";
@@ -295,7 +295,7 @@ public sealed partial class XnbReaderGenerator
         private static SourceText GetRootClassReaderImplementation(ReaderGenerationSpec readerSpec)
         {
             var writer = readerSpec.CreateSourceWriterWithReaderHeader()
-                                   .WriteLine("public virtual object Read(string readerType)")
+                                   .WriteLine("public override object Read(string readerType)")
                                    .Indent()
                                    .WriteLine("_ = Read7BitEncodedInt(); // discard reader, because we know what the type is")
                                    .WriteLine("switch (readerType)")
@@ -319,9 +319,8 @@ public sealed partial class XnbReaderGenerator
         private static SourceText GetAsIsConstructor(ReaderGenerationSpec readerSpec)
         {
             string readerClass = readerSpec.ReaderType.Name;
-            return readerSpec.CreateSourceWriterWithReaderHeader(isPrimaryReaderSourceFile: true, interfaceImplementation: BinaryReaderTypeRef)
-                             .WriteLine($"public {readerClass}({StreamTypeRef} input) : this(input, {EncodingTypeRef}.UTF8) {{ }}")
-                             .WriteLine($"public {readerClass}({StreamTypeRef} stream, {EncodingTypeRef} encoding, bool leaveOpen = false): base(stream, encoding, leaveOpen) {{ }}")
+            return readerSpec.CreateSourceWriterWithReaderHeader(isPrimaryReaderSourceFile: true)
+                             .WriteLine($"public {readerClass}({XnbStreamTypeRef} input) : base(input) {{ }}")
                              .CompleteSourceFileAndReturnText();
         }
         

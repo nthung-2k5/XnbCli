@@ -1,8 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using DotMake.CommandLine;
 using Serilog;
-using Xnb;
-using XnbCli;
+using XnbReader;
+using XnbReader.StardewValley;
 
 namespace XnbCli;
 
@@ -13,6 +14,7 @@ public class XnbCliCommand
     [CliCommand(Description = "Used to unpack XNB files")]
     public class UnpackCommand : ActionCommand
     {
+        private HashSet<string> readers = [];
         protected override void ProcessFile(string input, string output)
         {
             try
@@ -23,11 +25,15 @@ public class XnbCliCommand
                     return;
                 }
 
+                using var fileStream = File.OpenRead(input);
+                using var stream = new XnbStream(fileStream);
+                //using var reader = new ContentReader(stream);
+                //reader.LoadObject();
                 // load the XNB and get the object from it
-                var xnb = XnbProcessor.Load(input);
+                var xnb = stream.File;
 
-                FileAction.ExportFile(output, xnb);
-
+                //ExportAction.ExportFile(output, xnb, SourceGenerationContext.Default.XnbFile);
+                readers.Add(xnb.Readers[0].Type);
                 // log that the file was saved
                 Log.Information("Output file saved: {output:l}", output);
 
@@ -42,6 +48,15 @@ public class XnbCliCommand
                 Failed++;
             }
         }
+
+        public override void Run()
+        {
+            base.Run();
+            foreach (string reader in readers)
+            {
+                Console.WriteLine(TypeResolver.SimplifyType(reader));
+            }
+        }
     }
 
     [CliCommand(Description = "Used to pack XNB files")]
@@ -49,7 +64,7 @@ public class XnbCliCommand
     {
         protected override void ProcessFile(string input, string output)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

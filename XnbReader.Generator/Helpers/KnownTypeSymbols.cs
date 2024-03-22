@@ -42,11 +42,14 @@ internal sealed class KnownTypeSymbols(Compilation compilation)
     public INamedTypeSymbol? MemoryOwnerType => GetOrResolveType("CommunityToolkit.HighPerformance.Buffers.MemoryOwner`1", ref memoryOwnerType);
     private Option<INamedTypeSymbol?> memoryOwnerType;
         
-    public INamedTypeSymbol? InterfaceCustomReaderType => GetOrResolveType("XnbSerializer.ICustomReader`1", ref interfaceCustomReaderType);
+    public INamedTypeSymbol? InterfaceCustomReaderType => GetOrResolveType(ConstStrings.FullInterfaceCustomReader, ref interfaceCustomReaderType);
     private Option<INamedTypeSymbol?> interfaceCustomReaderType;
         
     public INamedTypeSymbol? ReaderConstructorAttributeType => GetOrResolveType(ConstStrings.FullReaderConstructorAttribute, ref readerConstructorAttributeType);
     private Option<INamedTypeSymbol?> readerConstructorAttributeType;
+
+    public INamedTypeSymbol? XnbContentReaderType => GetOrResolveType(ConstStrings.FullXnbContentReader, ref xnbContentReaderType);
+    private Option<INamedTypeSymbol?> xnbContentReaderType;
 
     private INamedTypeSymbol? GetOrResolveType(Type type, ref Option<INamedTypeSymbol?> field) => GetOrResolveType(type.FullName!, ref field);
 

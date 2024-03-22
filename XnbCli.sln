@@ -2,9 +2,21 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbCli", "XnbCli\XnbCli.csproj", "{0441DDB8-F538-4C8D-9133-EB980F025E6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xnb", "Xnb\Xnb.csproj", "{6065D7EB-01DB-4B0C-9E5C-7D084B9AF32A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader", "XnbReader\XnbReader.csproj", "{6065D7EB-01DB-4B0C-9E5C-7D084B9AF32A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.Generator", "XnbReader.Generator\XnbReader.Generator.csproj", "{989499F9-2BC0-4713-ACFF-50A0B5F01602}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.MonoGameShims", "XnbReader.MonoGameShims\XnbReader.MonoGameShims.csproj", "{8441DAAE-32C7-47D6-9D38-51897FFBDC76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.StardewValley", "XnbReader.StardewValley\XnbReader.StardewValley.csproj", "{D7F8AA6B-7C1A-467F-8C04-10DAF5C6E988}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.Core", "XnbReader.Core\XnbReader.Core.csproj", "{1F290839-F159-4F92-97E7-B986C4A408F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.Texture", "XnbReader.Texture\XnbReader.Texture.csproj", "{1007BB92-FAE6-42A4-BF95-C9387FE0AD39}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbCli.CecilPorter", "XnbCli.CecilPorter\XnbCli.CecilPorter.csproj", "{3C3D5FB2-8694-4EFD-832B-FD358029C599}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XnbReader.StardewValleyTest", "XnbReader.StardewValleyTest\XnbReader.StardewValleyTest.csproj", "{E6A3D1DF-BE70-4AD5-807C-2C46726C9774}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +36,29 @@ Global
 		{989499F9-2BC0-4713-ACFF-50A0B5F01602}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{989499F9-2BC0-4713-ACFF-50A0B5F01602}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{989499F9-2BC0-4713-ACFF-50A0B5F01602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8441DAAE-32C7-47D6-9D38-51897FFBDC76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8441DAAE-32C7-47D6-9D38-51897FFBDC76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8441DAAE-32C7-47D6-9D38-51897FFBDC76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8441DAAE-32C7-47D6-9D38-51897FFBDC76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7F8AA6B-7C1A-467F-8C04-10DAF5C6E988}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7F8AA6B-7C1A-467F-8C04-10DAF5C6E988}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7F8AA6B-7C1A-467F-8C04-10DAF5C6E988}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7F8AA6B-7C1A-467F-8C04-10DAF5C6E988}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F290839-F159-4F92-97E7-B986C4A408F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F290839-F159-4F92-97E7-B986C4A408F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F290839-F159-4F92-97E7-B986C4A408F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F290839-F159-4F92-97E7-B986C4A408F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1007BB92-FAE6-42A4-BF95-C9387FE0AD39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1007BB92-FAE6-42A4-BF95-C9387FE0AD39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1007BB92-FAE6-42A4-BF95-C9387FE0AD39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1007BB92-FAE6-42A4-BF95-C9387FE0AD39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C3D5FB2-8694-4EFD-832B-FD358029C599}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C3D5FB2-8694-4EFD-832B-FD358029C599}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C3D5FB2-8694-4EFD-832B-FD358029C599}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C3D5FB2-8694-4EFD-832B-FD358029C599}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6A3D1DF-BE70-4AD5-807C-2C46726C9774}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6A3D1DF-BE70-4AD5-807C-2C46726C9774}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6A3D1DF-BE70-4AD5-807C-2C46726C9774}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6A3D1DF-BE70-4AD5-807C-2C46726C9774}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

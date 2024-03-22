@@ -18,9 +18,6 @@ public sealed partial class XnbReaderGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Add the marker attribute to the compilation.
-        context.RegisterPostInitializationOutput(static ctx => ctx.AddSource("XnbReader.Base.g.cs", ConstStrings.PostInitSourceCode));
-
         var knownTypeSymbols = context.CompilationProvider.Select((compilation, _) => new KnownTypeSymbols(compilation));
 
         var readerGenerationSpecs = context.SyntaxProvider

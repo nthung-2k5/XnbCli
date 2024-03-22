@@ -60,6 +60,12 @@ public sealed partial class XnbReaderGenerator
                 return null;
             }
 
+            if (!knownSymbols.XnbContentReaderType.IsAssignableFrom(readerTypeSymbol))
+            {
+                ReportDiagnostic(DiagnosticDescriptors.MustInheritXnbContentReader, readerTypeSymbol);
+                return null;
+            }
+
             if (!TryGetNestedTypeDeclarations(readerClassDeclaration, semanticModel, cancellationToken, out var classDeclarationList))
             {
                 // Class or one of its containing types is not partial so we can't add to it.

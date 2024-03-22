@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>default</LangVersion>
+        <RootNamespace>XnbReader</RootNamespace>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2"/>
+        <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.0"/>
+        <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
+        <PackageReference Include="K4os.Compression.LZ4" Version="1.3.7-beta"/>
+        <PackageReference Include="Serilog" Version="3.1.1"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1"/>
+    </ItemGroup>
+
+</Project>
