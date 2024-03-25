@@ -46,10 +46,10 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor MemberCantSerializeType = new(
+    public static readonly DiagnosticDescriptor MultipleSingleReader = new(
         id: "XNBSERI006",
-        title: "Member can't serialize type",
-        messageFormat: "The ClassReader type '{0}' member '{1}' type is '{2}' that can't serialize",
+        title: "TypeReader can't be both Default and Reflective",
+        messageFormat: "The TypeReader property in XnbReadable attribute can't be both Default and Reflective",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

@@ -1,3 +1,3 @@
-﻿namespace XnbReader.StardewValley.Crafting;
+namespace XnbReader.StardewValley.Crafting;
 
-public record TailorItemRecipe(List<string> FirstItemTags, List<string> SecondItemTags, bool SpendRightItem, int CraftedItemId, List<string> CraftedItemIDs, string CraftedItemColor);
+public record TailorItemRecipe(string Id, List<string> FirstItemTags, List<string> SecondItemTags, bool SpendRightItem, string CraftedItemId, List<string> CraftedItemIds, string CraftedItemIdFeminine);

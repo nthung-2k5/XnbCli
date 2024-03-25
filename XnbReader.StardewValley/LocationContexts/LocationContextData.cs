@@ -1,0 +1,3 @@
+namespace XnbReader.StardewValley.LocationContexts;
+
+public record LocationContextData(Season? SeasonOverride, string DefaultMusic, string DefaultMusicCondition, bool DefaultMusicDelayOneScreen, List<Locations.LocationMusicData> Music, string DayAmbience, string NightAmbience, bool PlayRandomAmbientSounds, bool AllowRainTotem, string RainTotemAffectsContext, List<WeatherCondition> WeatherConditions, string CopyWeatherFromLocation, List<ReviveLocation> ReviveLocations, int MaxPassOutCost, List<PassOutMailData> PassOutMail, List<ReviveLocation> PassOutLocations, Dictionary<string,string> CustomFields);

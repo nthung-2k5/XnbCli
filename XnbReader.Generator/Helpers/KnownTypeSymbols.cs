@@ -2,9 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 
 namespace XnbReader.Generator.Helpers;
@@ -36,8 +34,8 @@ internal sealed class KnownTypeSymbols(Compilation compilation)
     public INamedTypeSymbol ArrayType => arrayType ??= Compilation.GetSpecialType(SpecialType.System_Array);
     private INamedTypeSymbol? arrayType;
 
-    public INamedTypeSymbol? ClassReaderAttributeType => GetOrResolveType(ConstStrings.FullReaderAttribute, ref classReaderAttributeType);
-    private Option<INamedTypeSymbol?> classReaderAttributeType;
+    public INamedTypeSymbol? XnbReadableAttributeType => GetOrResolveType(ConstStrings.FullXnbReadableAttribute, ref xnbReadableAttributeType);
+    private Option<INamedTypeSymbol?> xnbReadableAttributeType;
 
     public INamedTypeSymbol? MemoryOwnerType => GetOrResolveType("CommunityToolkit.HighPerformance.Buffers.MemoryOwner`1", ref memoryOwnerType);
     private Option<INamedTypeSymbol?> memoryOwnerType;

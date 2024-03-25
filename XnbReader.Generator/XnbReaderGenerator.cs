@@ -22,7 +22,7 @@ public sealed partial class XnbReaderGenerator : IIncrementalGenerator
 
         var readerGenerationSpecs = context.SyntaxProvider
                                            .ForAttributeWithMetadataName(
-                                               ConstStrings.FullReaderAttribute,
+                                               ConstStrings.FullXnbReadableAttribute,
                                                static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
                                                static (ctx, _) => (ReaderClass: (ClassDeclarationSyntax)ctx.TargetNode, ctx.SemanticModel))
                                            .Combine(knownTypeSymbols)

@@ -1,3 +1,3 @@
-﻿namespace XnbReader.StardewValley.HomeRenovations;
+namespace XnbReader.StardewValley.HomeRenovations;
 
 public record RectGroup(List<Rect> Rects);

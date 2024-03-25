@@ -5,16 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Reader\" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\XnbReader.Core\XnbReader.Core.csproj" />
-        <ProjectReference Include="..\XnbReader.Generator\XnbReader.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\XnbReader.MonoGameShims\XnbReader.MonoGameShims.csproj" />
         <ProjectReference Include="..\XnbReader.StardewValley\XnbReader.StardewValley.csproj" />
     </ItemGroup>

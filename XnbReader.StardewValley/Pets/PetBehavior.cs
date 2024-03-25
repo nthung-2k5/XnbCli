@@ -1,0 +1,3 @@
+namespace XnbReader.StardewValley.Pets;
+
+public record PetBehavior(string Name, bool IsSideBehavior, bool RandomizeDirection, string Direction, bool WalkInDirection, int MoveSpeed, string SoundOnStart, int SoundRangeFromBorder, int SoundRange, bool SoundIsVoice, int Shake, List<PetAnimationFrame> Animation, PetAnimationLoopMode LoopMode, int AnimationMinimumLoops, int AnimationMaximumLoops, List<PetBehaviorChanges> AnimationEndBehaviorChanges, int Duration, int MinimumDuration, int MaximumDuration, List<PetBehaviorChanges> TimeoutBehaviorChanges, List<PetBehaviorChanges> PlayerNearbyBehaviorChanges, float RandomBehaviorChangeChance, List<PetBehaviorChanges> RandomBehaviorChanges, List<PetBehaviorChanges> JumpLandBehaviorChanges);

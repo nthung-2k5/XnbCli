@@ -3,7 +3,7 @@
     "profiles": {
         "DebugRoslynSourceGenerator": {
             "commandName": "DebugRoslynComponent",
-            "targetProject": "../Xnb/Xnb.csproj"
+            "targetProject": "../XnbReader.StardewValley/XnbReader.StardewValley.csproj"
         }
     }
 }

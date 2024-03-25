@@ -10,8 +10,8 @@ public abstract class ActionCommand
     [CliArgument(Description = "Input file or folder", ValidationRules = CliValidationRules.ExistingFileOrDirectory)]
     public string Input { get; set; }
 
-    [CliArgument(Description = "Output file or folder", Required = false, ValidationRules = CliValidationRules.ExistingFileOrDirectory)]
-    public string Output { get; set; }
+    [CliArgument(Description = "Output file or folder", Required = false, ValidationRules = CliValidationRules.LegalPath)]
+    public string? Output { get; set; }
 
     [CliOption(Description = "Enables debug verbose printing")]
     public bool Debug { get; set; }
@@ -22,7 +22,7 @@ public abstract class ActionCommand
     protected int Failed { get; set; }
     protected int Success { get; set; }
 
-    public virtual void Run()
+    public void Run()
     {
         var themes = new AnsiConsoleTheme(new Dictionary<ConsoleThemeStyle, string>
         {
@@ -62,7 +62,7 @@ public abstract class ActionCommand
         Console.WriteLine("\x1b[31;1mFailed\x1b[0m {0}", Failed);
     }
 
-    private void ProcessFiles(string input, string output)
+    protected virtual void ProcessFiles(string input, string? output)
     {
         if (File.Exists(input))
         {

@@ -1,8 +1,4 @@
-using System.Text;
-using K4os.Compression.LZ4;
 using Serilog;
-using XnbReader.Decoder;
-using XnbReader.FileFormat;
 
 namespace XnbReader;
 

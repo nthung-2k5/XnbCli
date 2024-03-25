@@ -32,11 +32,7 @@ public sealed record TypeGenerationSpec
     /// </summary>
     public required TypeRef TypeRef { get; init; }
 
-    public string? TypeFormat { get; init; }
-    
-    public string? KeyTypeFormat { get; init; }
-    
-    public string? ValueTypeFormat { get; init; }
+    public required string? TypeFormat { get; init; }
 
     public required ClassType ClassType { get; init; }
 
@@ -70,18 +66,18 @@ public sealed record TypeGenerationSpec
 
         if (CollectionKeyType is not null)
         {
-            sb.Replace("{Key}", FormatReader(CollectionKeyType, KeyTypeFormat));
+            sb.Replace("{Key}", CollectionKeyType.FullName);
         }
             
         if (CollectionValueType is not null)
         {
-            sb.Replace("{Value}", FormatReader(CollectionValueType, ValueTypeFormat));
+            sb.Replace("{Value}", CollectionValueType.FullName);
         }
 
         return sb.ToString();
     }
 
-    private static string FormatReader(TypeRef type, string? format)
+    private static string FormatReader(TypeRef type, string format)
     {
         if (!string.IsNullOrEmpty(format))
         {

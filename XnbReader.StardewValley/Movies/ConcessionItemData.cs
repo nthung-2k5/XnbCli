@@ -1,3 +1,3 @@
-﻿namespace XnbReader.StardewValley.Movies;
+namespace XnbReader.StardewValley.Movies;
 
-public record ConcessionItemData(int ID, string Name, string DisplayName, string Description, int Price, List<string> ItemTags);
+public record ConcessionItemData(string Id, string Name, string DisplayName, string Description, int Price, string Texture, int SpriteIndex, List<string> ItemTags);

@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace XnbReader.FileFormat;
 
 [Flags]
+[JsonConverter(typeof(JsonStringEnumConverter<XnbFlag>))]
 public enum XnbFlag: byte
 {
     Uncompressed = 0x0,

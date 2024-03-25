@@ -940,7 +940,6 @@ internal class LzxDecoder : IDisposable
 internal struct LzxConstants
 {
     public const ushort MinMatch = 2;
-    public const ushort MaxMatch = 257;
     public const ushort NumChars = 256;
 
     public enum BlockType
@@ -969,4 +968,4 @@ internal struct LzxConstants
 }
 
 /* EXCEPTIONS */
-public class UnsupportedWindowSizeRange : Exception;
+file class UnsupportedWindowSizeRange : Exception;

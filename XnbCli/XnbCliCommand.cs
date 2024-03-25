@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using DotMake.CommandLine;
 using Serilog;
 using XnbReader;
@@ -14,7 +13,6 @@ public class XnbCliCommand
     [CliCommand(Description = "Used to unpack XNB files")]
     public class UnpackCommand : ActionCommand
     {
-        private HashSet<string> readers = [];
         protected override void ProcessFile(string input, string output)
         {
             try
@@ -25,15 +23,13 @@ public class XnbCliCommand
                     return;
                 }
 
-                using var fileStream = File.OpenRead(input);
-                using var stream = new XnbStream(fileStream);
-                //using var reader = new ContentReader(stream);
-                //reader.LoadObject();
+                using var stream = new XnbStream(File.OpenRead(input));
+                using var reader = new ContentReader(stream);
+                _ = reader.LoadObject();
                 // load the XNB and get the object from it
                 var xnb = stream.File;
 
-                //ExportAction.ExportFile(output, xnb, SourceGenerationContext.Default.XnbFile);
-                readers.Add(xnb.Readers[0].Type);
+                ExportAction.ExportFile(output, xnb);
                 // log that the file was saved
                 Log.Information("Output file saved: {output:l}", output);
 
@@ -48,15 +44,6 @@ public class XnbCliCommand
                 Failed++;
             }
         }
-
-        public override void Run()
-        {
-            base.Run();
-            foreach (string reader in readers)
-            {
-                Console.WriteLine(TypeResolver.SimplifyType(reader));
-            }
-        }
     }
 
     [CliCommand(Description = "Used to pack XNB files")]
@@ -66,5 +53,44 @@ public class XnbCliCommand
         {
             throw new NotSupportedException();
         }
+    }
+    
+    [CliCommand(Description = "Unpack all XNB files and read the first reader only")]
+    public class ListCommand: ActionCommand
+    {
+        protected override void ProcessFiles(string input, string? output)
+        {
+            if (File.Exists(input))
+            {
+                // call the function
+                ProcessFile(input, string.Empty);
+            }
+            else
+            {
+                foreach (string file in Directory.EnumerateFiles(input, "*.xnb", SearchOption.AllDirectories))
+                {
+                    ProcessFile(file, string.Empty);
+                }
+            }
+
+            var dir = Directory.CreateDirectory(output ?? ".");
+            File.WriteAllLines(Path.Combine(dir.FullName, "readers.txt"), readers);
+            Console.WriteLine("Readers written to {0}", Path.Combine(dir.FullName, "readers.txt"));
+        }
+
+        protected override void ProcessFile(string input, string output)
+        {
+            using var fileStream = File.OpenRead(input);
+            using var stream = new XnbStream(fileStream);
+            // load the XNB and get the reader from it
+            var xnb = stream.File;
+            readers.Add(xnb.Readers[0].Type);
+            
+            // log that the file was saved
+            Log.Information("Reader for file {filename}: {output:l}", Path.GetFileName(input), output);
+            Success++;
+        }
+        
+        private readonly HashSet<string> readers = [];
     }
 }

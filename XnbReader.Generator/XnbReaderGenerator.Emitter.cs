@@ -25,9 +25,7 @@ public sealed partial class XnbReaderGenerator
         private const string NotImplementedExceptionTypeRef = "global::System.NotImplementedException";
         private const string UnsafeTypeRef = "global::System.Runtime.CompilerServices.Unsafe";
         private const string MemoryMarshalTypeRef = "global::System.Runtime.InteropServices.MemoryMarshal";
-        private const string BinaryReaderTypeRef = "global::System.IO.BinaryReader";
         private const string XnbStreamTypeRef = "global::XnbReader.XnbStream";
-        private const string EncodingTypeRef = "global::System.Text.Encoding";
         private const string GarbageCollectorTypeRef = "global::System.GC";
         private const string ListTypeRef = "global::System.Collections.Generic.List";
         private const string DictionaryTypeRef = "global::System.Collections.Generic.Dictionary";

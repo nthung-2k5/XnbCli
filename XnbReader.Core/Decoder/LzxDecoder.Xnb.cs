@@ -11,8 +11,8 @@ namespace XnbReader.Decoder;
 internal class LzxDecoderStream : Stream
 {
     private static readonly RecyclableMemoryStreamManager Manager = new();
-    private LzxDecoder dec;
-    private RecyclableMemoryStream decompressedStream;
+    private readonly LzxDecoder dec;
+    private readonly RecyclableMemoryStream decompressedStream;
 
     public LzxDecoderStream(Stream input, int decompressedSize, int compressedSize)
     {
@@ -86,14 +86,13 @@ internal class LzxDecoderStream : Stream
     {
         base.Dispose(disposing);
 
-        if (disposing)
+        if (!disposing)
         {
-            decompressedStream.Dispose();
-            dec.Dispose();
+            return;
         }
 
-        dec = null;
-        decompressedStream = null;
+        decompressedStream.Dispose();
+        dec.Dispose();
     }
 
 #region Stream internals

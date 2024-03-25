@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using EnumsNET;
 using Microsoft.CodeAnalysis;
 using XnbReader.Generator.Helpers;
+using XnbReader.Generator.Model;
 
 namespace XnbReader.Generator;
 
@@ -9,24 +11,33 @@ public sealed partial class XnbReaderGenerator
 {
     private sealed partial class Parser
     {
-        private void ParseClassReaderAttributes(ISymbol readerClassSymbol, out List<TypeToGenerate>? rootSerializableTypes)
+        private void ParseClassReaderAttributes(ISymbol readerClassSymbol, out List<TypeToGenerate>? rootReadableTypes)
         {
-            rootSerializableTypes = null;
+            rootReadableTypes = null;
 
             foreach (var attributeData in readerClassSymbol.GetAttributes())
             {
                 var attributeClass = attributeData.AttributeClass;
 
-                if (SymbolEqualityComparer.Default.Equals(attributeClass, knownSymbols.ClassReaderAttributeType))
+                if (!SymbolEqualityComparer.Default.Equals(attributeClass, knownSymbols.XnbReadableAttributeType))
                 {
-                    var typeToGenerate = ParseClassReaderAttribute(attributeData);
-                    if (typeToGenerate is null)
-                    {
-                        continue;
-                    }
-
-                    (rootSerializableTypes ??= []).Add(typeToGenerate.Value);
+                    continue;
                 }
+
+                var typeToGenerate = ParseClassReaderAttribute(attributeData);
+                
+                if (typeToGenerate is null)
+                {
+                    continue;
+                }
+
+                if (typeToGenerate.Value.TypeReader.HasAllFlags(ContentTypeReader.Default | ContentTypeReader.Reflective))
+                {
+                    ReportDiagnostic(DiagnosticDescriptors.MultipleSingleReader, attributeData.GetLocation(), attributeData.AttributeClass.Name);
+                    continue;
+                }
+
+                (rootReadableTypes ??= []).Add(typeToGenerate.Value);
             }
         }
             
@@ -35,29 +46,40 @@ public sealed partial class XnbReaderGenerator
             Debug.Assert(attributeData.ConstructorArguments.Length == 1);
             
             var typeSymbol = (ITypeSymbol?)attributeData.ConstructorArguments[0].Value;
-            string? typeFormat = null;
-            string? readerFormat = null;
-
-            foreach (var namedArg in attributeData.NamedArguments)
-            {
-                switch (namedArg.Key)
-                {
-                    case "NamespaceOverride":
-                        typeFormat = (string?)namedArg.Value.Value!;
-                        break;
-                    
-                    case "ReaderOverride":
-                        readerFormat = (string?)namedArg.Value.Value!;
-                        break;
-                }
-            }
 
             if (typeSymbol is null)
             {
                 return null;
             }
 
-            return new TypeToGenerate(typeSymbol, typeFormat, readerFormat);
+            var typeReader = ContentTypeReader.StringKeyDictionary;
+            string? readerFormat = null;
+
+            foreach (var namedArg in attributeData.NamedArguments)
+            {
+                object obj = namedArg.Value.Value!;
+                switch (namedArg.Key)
+                {
+                    case "TypeReader":
+                        typeReader = (ContentTypeReader)obj;
+                        break;
+                    
+                    case "ReaderOverride":
+                        readerFormat = (string?)obj;
+                        break;
+                }
+            }
+
+            if (typeReader.HasAllFlags(ContentTypeReader.Reflective))
+            {
+                readerFormat = ConstStrings.ReflectiveReader;
+            }
+            else if (typeReader.HasAllFlags(ContentTypeReader.Default))
+            {
+                readerFormat = ConstStrings.DefaultReader;
+            }
+
+            return new TypeToGenerate(typeSymbol, typeReader, readerFormat);
         }
         
         private static void ProcessMemberCustomAttributes(ISymbol memberInfo, out bool? hasHeader)

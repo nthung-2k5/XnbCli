@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using EnumsNET;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -76,21 +77,22 @@ public sealed partial class XnbReaderGenerator
             // Enqueue attribute data for spec generation
             foreach (var rootType in rootTypes)
             {
-                if (string.IsNullOrEmpty(rootType.ReaderFormat))
+                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.List) && TryGetListTypeSymbol(rootType, out var list))
                 {
-                    if (TryGetListTypeSymbol(rootType, out var list))
-                    {
-                        typesToGenerate.Enqueue(list.Value);
-                    }
-                
-                    if (TryGetDictionaryTypeSymbol(knownSymbols.Int32Type, rootType, out var dictInt) &&
-                        TryGetDictionaryTypeSymbol(knownSymbols.StringType, rootType, out var dictStr))
-                    {
-                        typesToGenerate.Enqueue(dictInt.Value);
-                        typesToGenerate.Enqueue(dictStr.Value);
-                    }
+                    typesToGenerate.Enqueue(list.Value);
                 }
-                else
+                
+                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.IntKeyDictionary) && TryGetDictionaryTypeSymbol(knownSymbols.Int32Type, rootType, out var dictInt))
+                {
+                    typesToGenerate.Enqueue(dictInt.Value);
+                }
+
+                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.StringKeyDictionary) && TryGetDictionaryTypeSymbol(knownSymbols.StringType, rootType, out var dictStr))
+                {
+                    typesToGenerate.Enqueue(dictStr.Value);
+                }
+                
+                if (rootType.TypeReader.HasAnyFlags(ContentTypeReader.SingleReader))
                 {
                     typesToGenerate.Enqueue(rootType);
                 }
@@ -182,7 +184,7 @@ public sealed partial class XnbReaderGenerator
 
         private TypeGenerationSpec? ParseTypeGenerationSpec(in TypeToGenerate typeToGenerate)
         {
-            (var type, string? format, _) = typeToGenerate;
+            (var type, _, string? readerFormat) = typeToGenerate;
             
             if (type is INamedTypeSymbol { IsUnboundGenericType: true } or IErrorTypeSymbol)
             {
@@ -197,8 +199,6 @@ public sealed partial class XnbReaderGenerator
             ClassType classType;
             TypeRef? collectionKeyType = null;
             TypeRef? collectionValueType = null;
-            string keyTypeFormat = null;
-            string valueTypeFormat = null;
             TypeRef? underlyingType = null;
             List<PropertyGenerationSpec>? propertySpecs = null;
             ObjectConstructionStrategy constructionStrategy = default;
@@ -220,21 +220,20 @@ public sealed partial class XnbReaderGenerator
                 classType = ClassType.Enum;
                 underlyingType = EnqueueType((type as INamedTypeSymbol).EnumUnderlyingType);
             }
-            else if (TryResolveCollectionType(type, out var valueType, out var keyType, out collectionType, ref format))
+            else if (TryResolveCollectionType(type, out var valueType, out var keyType, out collectionType, ref readerFormat))
             {
                 if (collectionType == CollectionType.Unsupported)
                 {
                     ReportDiagnostic(DiagnosticDescriptors.UnsupportedCollection, type);
+                    return null;
                 }
                 
                 classType = keyType is not null ? ClassType.Dictionary : ClassType.Enumerable;
                 collectionValueType = EnqueueType(valueType.Value.Type);
-                valueTypeFormat = valueType.Value.Format;
 
                 if (keyType.HasValue)
                 {
                     collectionKeyType = EnqueueType(keyType.Value.Type);
-                    keyTypeFormat = keyType.Value.Format;
                 }
             }
             else if (type is INamedTypeSymbol { IsUnmanagedType: true } unmanagedType && !ContainsVariableSizedMember(unmanagedType))
@@ -280,9 +279,7 @@ public sealed partial class XnbReaderGenerator
                 ConstructionStrategy = constructionStrategy,
                 UnderlyingType = underlyingType,
                 ImplementsICustomReader = implementsICustomReader,
-                TypeFormat = typeToGenerate.ReaderFormat ?? format,
-                KeyTypeFormat = keyTypeFormat,
-                ValueTypeFormat = valueTypeFormat
+                TypeFormat = typeToGenerate.ReaderFormat ?? readerFormat
             };
         }
 
@@ -315,21 +312,21 @@ public sealed partial class XnbReaderGenerator
             {
                 //Debug.Assert(arraySymbol.Rank == 1, "multi-dimensional arrays should have been handled earlier.");
                 collectionType = arraySymbol.Rank == 1 ? CollectionType.Array : CollectionType.MultiArray;
-                valueType = new TypeToGenerate(arraySymbol.ElementType, typeFormat);
+                valueType = new TypeToGenerate(arraySymbol.ElementType);
                 typeFormat = $"{ConstStrings.XnaFrameworkContentNamespace}.{collectionType.ToString()}Reader`1[{{Value}}]";
             }
             else if ((actualTypeToConvert = type.GetCompatibleGenericBaseType(knownSymbols.ListOfTType)) != null)
             {
                 collectionType = CollectionType.List;
-                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[0], typeFormat);
-                typeFormat = $"{ConstStrings.XnaFrameworkContentNamespace}.ListReader`1[{{Value}}]";
+                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[0]);
+                typeFormat = ConstStrings.ListReader;
             }
             else if ((actualTypeToConvert = type.GetCompatibleGenericBaseType(knownSymbols.DictionaryOfTKeyTValueType)) != null)
             {
                 collectionType = CollectionType.Dictionary;
                 keyType = new TypeToGenerate(actualTypeToConvert.TypeArguments[0]);
-                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[1], typeFormat);
-                typeFormat += $"{ConstStrings.XnaFrameworkContentNamespace}.DictionaryReader`2[{{Key}},{{Value}}]";
+                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[1]);
+                typeFormat = ConstStrings.DictionaryReader;
             }
             else
             {
@@ -342,13 +339,13 @@ public sealed partial class XnbReaderGenerator
 
         private bool TryGetDictionaryTypeSymbol(ITypeSymbol keyType, TypeToGenerate valueType, [NotNullWhen(true)] out TypeToGenerate? dictionary)
         {
-            dictionary = knownSymbols.DictionaryOfTKeyTValueType is null ? null : valueType with { Type = knownSymbols.DictionaryOfTKeyTValueType?.Construct(keyType, valueType.Type) };
+            dictionary = knownSymbols.DictionaryOfTKeyTValueType is null ? null : valueType with { Type = knownSymbols.DictionaryOfTKeyTValueType?.Construct(keyType, valueType.Type), ReaderFormat = ConstStrings.DictionaryReader };
             return dictionary is not null;
         }
         
         private bool TryGetListTypeSymbol(TypeToGenerate valueType, [NotNullWhen(true)] out TypeToGenerate? list)
         {
-            list = knownSymbols.ListOfTType is null ? null : valueType with { Type = knownSymbols.ListOfTType?.Construct(valueType.Type) };
+            list = knownSymbols.ListOfTType is null ? null : valueType with { Type = knownSymbols.ListOfTType?.Construct(valueType.Type), ReaderFormat = ConstStrings.ListReader };
             return list is not null;
         }
         
@@ -415,6 +412,6 @@ public sealed partial class XnbReaderGenerator
 
         private bool IsDiscardReaderType(ITypeSymbol type) => discardReaderTypes.Contains(type.BaseType) || discardReaderTypes.Contains(type.OriginalDefinition);
 
-        public readonly record struct TypeToGenerate(ITypeSymbol Type, string? Format = null, string? ReaderFormat = null);
+        public readonly record struct TypeToGenerate(ITypeSymbol Type, ContentTypeReader TypeReader = ContentTypeReader.StringKeyDictionary, string? ReaderFormat = null);
     }
 }

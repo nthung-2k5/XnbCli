@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Text;
 using CommunityToolkit.HighPerformance.Buffers;
 using K4os.Compression.LZ4;
@@ -46,6 +45,12 @@ public sealed class XnbStream: Stream
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+
+        if (!disposing)
+        {
+            return;
+        }
+        
         innerStream.Dispose();
     }
 

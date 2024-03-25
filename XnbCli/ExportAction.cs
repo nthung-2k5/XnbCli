@@ -1,11 +1,10 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using Serilog;
 using StbImageWriteSharp;
+using XnbCli.TextureHelper;
 using XnbReader.FileFormat;
 using XnbReader.MonoGameShims;
-using XnbReader.Texture;
 
 namespace XnbCli;
 
@@ -13,7 +12,7 @@ public static class ExportAction
 {
     private static readonly ImageWriter ImgWriter = new();
 
-    public static void ExportFile(string filename, XnbFile xnb, JsonTypeInfo<XnbFile> context)
+    public static void ExportFile(string filename, XnbFile xnb)
     {
         if (xnb.Content is null)
         {
@@ -27,14 +26,12 @@ public static class ExportAction
             Directory.CreateDirectory(dirPath);
         }
 
-        object temp = xnb.Content;
-        ExportExternalResource(filename, ref temp);
-        xnb.Content = temp;
+        ExportExternalResource(filename, ref xnb.Content);
 
         using var json = File.Create(filename);
         using var utf8Json = new Utf8JsonWriter(json, new JsonWriterOptions { Indented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
 
-        JsonSerializer.Serialize(utf8Json, xnb, context);
+        JsonSerializer.Serialize(utf8Json, xnb, JsonContextForXnbReader.Default.XnbFile);
 
         if (xnb.Content is IDisposable disposable)
         {
@@ -65,28 +62,23 @@ public static class ExportAction
         string outputFilename = Path.ChangeExtension(filename, extension);
         var resourceFile = new FileInfo(outputFilename);
         using var resourceWriter = resourceFile.CreateText();
+        var stream = resourceWriter.BaseStream;
 
         switch (content)
         {
             case Texture2D tex:
-                ImgWriter.Write(tex, resourceWriter.BaseStream);
-                tex.Dispose();
+                ExportTextureAndDispose(tex, stream);
                 break;
 
             case SpriteFont spr:
-            {
-                var tex = spr.Texture;
-                ImgWriter.Write(tex, resourceWriter.BaseStream);
-                var external = new ExternalSpriteFont(spr, Path.GetFileName(outputFilename));
-                tex.Dispose();
-                content = external;
+                ExportTextureAndDispose(spr.Texture, stream);
+                content = new ExternalSpriteFont(spr, Path.GetFileName(outputFilename));
                 return;
-            }
             case Effect eff:
-                resourceWriter.BaseStream.Write(eff.Data);
+                stream.Write(eff.Data);
                 break;
-            case TBin eff:
-                resourceWriter.BaseStream.Write(eff.Data);
+            case TBin tbin:
+                stream.Write(tbin.Data);
                 break;
             case BmFont font:
                 resourceWriter.Write(font.Xml);
@@ -94,5 +86,11 @@ public static class ExportAction
         }
 
         content = Path.GetFileName(outputFilename);
+    }
+
+    private static void ExportTextureAndDispose(Texture2D tex, Stream stream)
+    {
+        ImgWriter.Write(tex, stream);
+        tex.Dispose();
     }
 }

@@ -1,3 +1,3 @@
-﻿namespace XnbReader.StardewValley;
+namespace XnbReader.StardewValley;
 
-public record ModWallpaperOrFlooring(string ID, string Texture, bool IsFlooring, int Count);
+public record ModWallpaperOrFlooring(string Id, string Texture, bool IsFlooring, int Count);
