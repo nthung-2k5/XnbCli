@@ -72,11 +72,8 @@ public sealed partial class XnbReaderGenerator
             return true;
         }
         
-        private ParameterGenerationSpec[] ParseConstructorParameters(in TypeToGenerate typeToGenerate, (IMethodSymbol? Symbol, ObjectConstructionStrategy Strategy) constructor)
+        private ParameterGenerationSpec[] ParseConstructorParameters((IMethodSymbol? Symbol, ObjectConstructionStrategy Strategy) constructor)
         {
-            var type = typeToGenerate.Type;
-            Debug.Assert(!type.IsAbstract);
-
             ParameterGenerationSpec[] constructorParameters;
             
             if (constructor.Strategy == ObjectConstructionStrategy.ParameterlessConstructor)

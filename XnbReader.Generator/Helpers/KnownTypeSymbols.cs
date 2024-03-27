@@ -13,8 +13,8 @@ internal sealed class KnownTypeSymbols(Compilation compilation)
 
     // Caches a set of types that will not discard reader despite being a reference type. Populated by the Parser class.
     public HashSet<ITypeSymbol>? DiscardReaderTypes { get; set; }
-        
-    public INamedTypeSymbol? InterfaceEnumerableType => interfaceEnumerableType ??= Compilation.GetSpecialType(SpecialType.System_Collections_IEnumerable);
+    
+    public INamedTypeSymbol InterfaceEnumerableType => interfaceEnumerableType ??= Compilation.GetSpecialType(SpecialType.System_Collections_IEnumerable);
     private INamedTypeSymbol? interfaceEnumerableType;
 
     public INamedTypeSymbol? ListOfTType => GetOrResolveType(typeof(List<>), ref listOfTType);
@@ -37,7 +37,7 @@ internal sealed class KnownTypeSymbols(Compilation compilation)
     public INamedTypeSymbol? XnbReadableAttributeType => GetOrResolveType(ConstStrings.FullXnbReadableAttribute, ref xnbReadableAttributeType);
     private Option<INamedTypeSymbol?> xnbReadableAttributeType;
 
-    public INamedTypeSymbol? MemoryOwnerType => GetOrResolveType("CommunityToolkit.HighPerformance.Buffers.MemoryOwner`1", ref memoryOwnerType);
+    public INamedTypeSymbol? MemoryOwnerType => GetOrResolveType("XnbReader.Buffers.MemoryOwner`1", ref memoryOwnerType);
     private Option<INamedTypeSymbol?> memoryOwnerType;
         
     public INamedTypeSymbol? InterfaceCustomReaderType => GetOrResolveType(ConstStrings.FullInterfaceCustomReader, ref interfaceCustomReaderType);
@@ -63,9 +63,15 @@ internal sealed class KnownTypeSymbols(Compilation compilation)
         return type;
     }
 
-    private readonly struct Option<T>(T value)
+    private readonly struct Option<T>
     {
-        public readonly bool HasValue = true;
-        public readonly T Value = value;
+        public readonly bool HasValue = false;
+        public readonly T Value;
+
+        public Option(T value)
+        {
+            HasValue = true;
+            Value = value;
+        }
     }
 }

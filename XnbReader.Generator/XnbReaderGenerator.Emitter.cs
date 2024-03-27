@@ -22,14 +22,11 @@ public sealed partial class XnbReaderGenerator
         private const string PropertyPrefix = "Prop_";
 
         // global::fully.qualified.name for referenced types
-        private const string NotImplementedExceptionTypeRef = "global::System.NotImplementedException";
-        private const string UnsafeTypeRef = "global::System.Runtime.CompilerServices.Unsafe";
-        private const string MemoryMarshalTypeRef = "global::System.Runtime.InteropServices.MemoryMarshal";
+        private const string NotSupportedExceptionTypeRef = "global::System.NotSupportedException";
         private const string XnbStreamTypeRef = "global::XnbReader.XnbStream";
-        private const string GarbageCollectorTypeRef = "global::System.GC";
         private const string ListTypeRef = "global::System.Collections.Generic.List";
         private const string DictionaryTypeRef = "global::System.Collections.Generic.Dictionary";
-        private const string MemoryOwnerTypeRef = "global::CommunityToolkit.HighPerformance.Buffers.MemoryOwner";
+        private const string TypeResolverTypeRef = "global::XnbReader.TypeResolver";
         
         /// <summary>
         /// Contains an index from TypeRef to TypeGenerationSpec for the current ReaderGenerationSpec.
@@ -128,15 +125,13 @@ public sealed partial class XnbReaderGenerator
 
             switch (collectionType)
             {
+                case CollectionType.Array when collectionValueType.Name == "Char":
+                    createCollectionMethodExpr = "return ReadChars(ReadInt32());";
+                    break;
                 case CollectionType.Array when collectionValueType.IsUnmanagedType:
-                    createCollectionMethodExpr = $"""
-                                                  int length = ReadInt32();
-                                                  
-                                                  var array = {GarbageCollectorTypeRef}.AllocateUninitializedArray<{valueTypeFullName}>(length);
-                                                  _ = Read({(collectionValueType.Name != "Char" ? $"{MemoryMarshalTypeRef}.AsBytes(array.AsSpan())" : "array.AsSpan()")});
-                                                  
-                                                  return array;
-                                                  """;
+                    Debug.Assert(collectionValueType.Name != "Char");
+                    
+                    createCollectionMethodExpr = $"return ReadUnmanagedArray<{valueTypeFullName}>();";
                     break;
                 case CollectionType.Array:
                     createCollectionMethodExpr = $$"""
@@ -152,16 +147,9 @@ public sealed partial class XnbReaderGenerator
                                                    """;
                     break;
                 case CollectionType.MemoryOwnerOfT:
-                    Debug.Assert(collectionValueType.IsValueType);
-                    createCollectionMethodExpr = $"""
-                                                  int length = ReadInt32();
-                                                  var memory = {MemoryOwnerTypeRef}<{valueTypeFullName}>.Allocate(length);
-                                                  
-                                                  var span = {MemoryMarshalTypeRef}.AsBytes(memory.Span);
-                                                  _ = Read(span);
-                                                  
-                                                  return memory;
-                                                  """;
+                    Debug.Assert(collectionValueType.IsUnmanagedType);
+                    
+                    createCollectionMethodExpr = $"return ReadMemoryOwner<{valueTypeFullName}>();";
                     break;
                 case CollectionType.Dictionary:
                     // Key metadata
@@ -169,6 +157,7 @@ public sealed partial class XnbReaderGenerator
                     Debug.Assert(collectionKeyType != null);
                     string? keyTypeName = collectionKeyType?.TypeInfoName;
                     string? keyTypeFullName = collectionKeyType?.FullyQualifiedName;
+                    
                     createCollectionMethodExpr = $$"""
                                                    int len = ReadInt32();
                                                    var dict = new {{DictionaryTypeRef}}<{{keyTypeFullName}}, {{valueTypeFullName}}>(len);
@@ -258,7 +247,7 @@ public sealed partial class XnbReaderGenerator
             var parameters = typeGenerationSpec.CtorParamGenSpecs;
             var propertyInitializers = typeGenerationSpec.PropertyGenSpecs;
             
-            writer.AddIndentation().Write($"return new {typeName}({string.Join(", ", parameters.Select(spec => PropertyPrefix + spec.Name))})");
+            _ = writer.AddIndentation().Write($"return new {typeName}({string.Join(", ", parameters.Select(spec => PropertyPrefix + spec.Name))})");
 
             if (propertyInitializers.Count > 0 && typeGenerationSpec.ConstructionStrategy == ObjectConstructionStrategy.ParameterlessConstructor)
             {
@@ -269,12 +258,9 @@ public sealed partial class XnbReaderGenerator
                     writer.WriteLine($"{spec.MemberName} = {PropertyPrefix}{spec.MemberName},");
                 }
 
-                writer.Dedent().Write(';').WriteLine();
+                _ = writer.Dedent();
             }
-            else
-            {
-                writer.Write(';').WriteLine();
-            }
+            _ = writer.Write(';').WriteLine();
         }
         
         private static void GenerateStaticCustomReaderInvocation(SourceWriter writer, TypeGenerationSpec typeGenerationSpec)
@@ -286,30 +272,30 @@ public sealed partial class XnbReaderGenerator
         {
             return readerSpec.CreateSourceWriterWithReaderHeader()
                              .GenerateTypeInfoFactoryHeader(typeMetadata)
-                             .WriteLine($"return {UnsafeTypeRef}.ReadUnaligned<{typeMetadata.TypeRef.FullyQualifiedName}>(ref ReadBytes({UnsafeTypeRef}.SizeOf<{typeMetadata.TypeRef.FullyQualifiedName}>())[0]);")
+                             .WriteLine($"return ReadUnmanaged<{typeMetadata.TypeRef.FullyQualifiedName}>();")
                              .CompleteSourceFileAndReturnText();
         }
 
         private static SourceText GetRootClassReaderImplementation(ReaderGenerationSpec readerSpec)
         {
             var writer = readerSpec.CreateSourceWriterWithReaderHeader()
-                                   .WriteLine("public override object Read(string readerType)")
+                                   .WriteLine("protected override object Read(string readerType)")
                                    .Indent()
                                    .WriteLine("_ = Read7BitEncodedInt(); // discard reader, because we know what the type is")
                                    .WriteLine("switch (readerType)")
                                    .Indent();
 
-            foreach (var topType in readerSpec.RootLevelTypes)
+            foreach (var rootType in readerSpec.RootLevelTypes)
             {
                 writer.WriteLine($"""
-                                  case {SymbolDisplay.FormatLiteral(topType.ToString(), true)}:
-                                      return {topType.CreateTypeInfoMethodName()}();
+                                  case {SymbolDisplay.FormatLiteral(rootType.ReaderFormat, true)}:
+                                      return {rootType.TypeGenSpec.CreateTypeInfoMethodName()}();
                                   """);
             }
             
             return writer.WriteLine($"""
                                      default:
-                                         throw new {NotImplementedExceptionTypeRef}();
+                                         throw new {NotSupportedExceptionTypeRef}();
                                      """)
                          .CompleteSourceFileAndReturnText();
         }
@@ -318,7 +304,8 @@ public sealed partial class XnbReaderGenerator
         {
             string readerClass = readerSpec.ReaderType.Name;
             return readerSpec.CreateSourceWriterWithReaderHeader(isPrimaryReaderSourceFile: true)
-                             .WriteLine($"public {readerClass}({XnbStreamTypeRef} input) : base(input) {{ }}")
+                             .WriteLine($"public {readerClass}({XnbStreamTypeRef} stream) : base(stream, {TypeResolverTypeRef}.Default) {{ }}")
+                             .WriteLine($"public {readerClass}({XnbStreamTypeRef} stream, {TypeResolverTypeRef} resolver) : base(stream, resolver) {{ }}")
                              .CompleteSourceFileAndReturnText();
         }
         
@@ -369,7 +356,7 @@ file static class SourceWriterExtensions
             writer.WriteLine($"""[global::System.CodeDom.Compiler.GeneratedCodeAttribute("{AssemblyName.Name}", "{AssemblyName.Version}")]""");
         }
 
-        // Emit the ClassReaders class declaration
+        // Emit the XnbReadable class declaration
         return writer.WriteLine($"{readerClasses[0]}{(interfaceImplementation is null ? "" : " : " + interfaceImplementation)}").Indent();
     }
     

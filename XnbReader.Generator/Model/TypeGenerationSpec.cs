@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Diagnostics;
-using System.Text;
 using XnbReader.Generator.Immutable;
 
 namespace XnbReader.Generator.Model;
@@ -32,8 +31,6 @@ public sealed record TypeGenerationSpec
     /// </summary>
     public required TypeRef TypeRef { get; init; }
 
-    public required string? TypeFormat { get; init; }
-
     public required ClassType ClassType { get; init; }
 
     public required bool ImplementsICustomReader { get; init; }
@@ -54,38 +51,4 @@ public sealed record TypeGenerationSpec
     public required ObjectConstructionStrategy ConstructionStrategy { get; init; }
 
     public required TypeRef? UnderlyingType { get; init; }
-
-    public override string ToString()
-    {
-        if (TypeFormat is null)
-        {
-            return TypeRef.FullName;
-        }
-
-        var sb = new StringBuilder(FormatReader(TypeRef, TypeFormat));
-
-        if (CollectionKeyType is not null)
-        {
-            sb.Replace("{Key}", CollectionKeyType.FullName);
-        }
-            
-        if (CollectionValueType is not null)
-        {
-            sb.Replace("{Value}", CollectionValueType.FullName);
-        }
-
-        return sb.ToString();
-    }
-
-    private static string FormatReader(TypeRef type, string format)
-    {
-        if (!string.IsNullOrEmpty(format))
-        {
-            return new StringBuilder(format).Replace("{Name}", type.Name)
-                                            .Replace("{FullName}", type.FullName)
-                                            .ToString();
-        }
-
-        return type.FullName;
-    }
 }

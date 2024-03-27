@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
-using CommunityToolkit.HighPerformance.Buffers;
 using Serilog;
+using XnbReader.Buffers;
 using XnbReader.MonoGameShims.Helpers;
 
 namespace XnbReader.MonoGameShims;
@@ -9,7 +9,7 @@ namespace XnbReader.MonoGameShims;
 public record Texture2D(SurfaceFormat Format, int Width, int Height, Memory<byte> Data): IDisposable, ICustomReader<Texture2D>
 {
     [JsonIgnore]
-    private readonly MemoryOwner<byte> dataOwner;
+    private readonly MemoryOwner<byte> dataOwner = null!;
 
     [ReaderConstructor]
     public Texture2D(SurfaceFormat format, int width, int height, MemoryOwner<byte> owner) : this(format, width, height, owner.Memory)

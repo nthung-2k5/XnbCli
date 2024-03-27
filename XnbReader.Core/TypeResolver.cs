@@ -4,176 +4,26 @@ using Serilog;
 
 namespace XnbReader;
 
-public static partial class TypeResolver
+public partial class TypeResolver
 {
     private static readonly Regex TypeSplit = TypeSplitRegex();
 
     private static readonly Regex TypeInfoSplit = TypeInfoSplitRegex();
 
-    public static string SimplifyType(string type)
+    public static readonly TypeResolver Default = new();
+
+    public virtual string SimplifyType(string type)
     {
         var parsed = ParseType(type);
         string simple = parsed.Type.Split(',')[0];
 
         Log.Debug("Type: {simple}", simple);
 
-        // switch over the possible types registered with this tool
-        // switch (simple)
-        // {
-        //     // Boolean
-        //     case "Microsoft.Xna.Framework.Content.BooleanReader":
-        //     case "System.Boolean":
-        //         return "Boolean";
-        //
-        //     // Char
-        //     case "Microsoft.Xna.Framework.Content.CharReader":
-        //     case "System.Char":
-        //         return "Char";
-        //
-        //     // Int32
-        //     case "Microsoft.Xna.Framework.Content.Int32Reader":
-        //     case "System.Int32":
-        //         return "Int32";
-        //
-        //     // Single
-        //     case "Microsoft.Xna.Framework.Content.SingleReader":
-        //         return "Single";
-        //
-        //     // String
-        //     case "Microsoft.Xna.Framework.Content.StringReader":
-        //     case "System.String":
-        //         return "String";
-        //
-        //     // Dictionary
-        //     case "Microsoft.Xna.Framework.Content.DictionaryReader":
-        //         return $"Dictionary<{ParseSubtypes(type).SelectToString(SimplifyType)}>";
-        //
-        //     // Array
-        //     case "Microsoft.Xna.Framework.Content.ArrayReader":
-        //         return $"Array<{ParseSubtypes(type).SelectToString(SimplifyType)}>";
-        //
-        //     // List
-        //     case "Microsoft.Xna.Framework.Content.ListReader":
-        //     case "System.Collections.Generic.List":
-        //         return $"List<{ParseSubtypes(type).SelectToString(SimplifyType)}>";
-        //
-        //     // Texture2D
-        //     case "Microsoft.Xna.Framework.Content.Texture2DReader":
-        //         return "Texture2D";
-        //
-        //     // Vector2
-        //     case "Microsoft.Xna.Framework.Content.Vector2Reader":
-        //     case "Microsoft.Xna.Framework.Vector2":
-        //         return "Vector2";
-        //
-        //     // Vector3
-        //     case "Microsoft.Xna.Framework.Content.Vector3Reader":
-        //     case "Microsoft.Xna.Framework.Vector3":
-        //         return "Vector3";
-        //
-        //     // Vector3
-        //     case "Microsoft.Xna.Framework.Content.Vector4Reader":
-        //     case "Microsoft.Xna.Framework.Vector4":
-        //         return "Vector4";
-        //
-        //     // SpriteFont
-        //     case "Microsoft.Xna.Framework.Content.SpriteFontReader":
-        //         return "SpriteFont";
-        //
-        //     // Rectangle
-        //     case "Microsoft.Xna.Framework.Content.RectangleReader":
-        //     case "Microsoft.Xna.Framework.Rectangle":
-        //         return "Rectangle";
-        //
-        //     // Effect
-        //     case "Microsoft.Xna.Framework.Content.EffectReader":
-        //     case "Microsoft.Xna.Framework.Graphics.Effect":
-        //         return "Effect";
-        //
-        //     // xTile TBin
-        //     case "xTile.Pipeline.TideReader":
-        //         return "TBin";
-        //
-        //     // BmFont
-        //     case "BmFont.XmlSourceReader":
-        //         return "BmFont";
-        //
-        //     // Reflective
-        //     case "Microsoft.Xna.Framework.Content.ReflectiveReader":
-        //         return ParseSubtypes(type).SelectToString(SimplifyType);
-        //
-        //     // MovieData
-        //     case "StardewValley.GameData.Movies.MovieData":
-        //         return "Reflective<MovieData>";
-        //
-        //     // MovieSceneReader
-        //     case "StardewValley.GameData.Movies.MovieScene":
-        //         return "Reflective<MovieScene>";
-        //
-        //     // ConcessionItemData
-        //     case "StardewValley.GameData.Movies.ConcessionItemData":
-        //         return "Reflective<ConcessionItemData>";
-        //
-        //     // ConcessionTaste
-        //     case "StardewValley.GameData.Movies.ConcessionTaste":
-        //         return "Reflective<ConcessionTaste>";
-        //
-        //     // FishPondData
-        //     case "StardewValley.GameData.FishPond.FishPondData":
-        //         return "Reflective<FishPondData>";
-        //
-        //     // FishPondReward
-        //     case "StardewValley.GameData.FishPond.FishPondReward":
-        //         return "Reflective<FishPondReward>";
-        //
-        //     // MovieCharacterReaction
-        //     case "StardewValley.GameData.Movies.MovieCharacterReaction":
-        //         return "Reflective<MovieCharacterReaction>";
-        //
-        //     // MovieReaction
-        //     case "StardewValley.GameData.Movies.MovieReaction":
-        //         return "Reflective<MovieReaction>";
-        //
-        //     // SpecialResponses
-        //     case "StardewValley.GameData.Movies.SpecialResponses":
-        //         return "Reflective<SpecialResponses>";
-        //
-        //     // CharacterResponse
-        //     case "StardewValley.GameData.Movies.CharacterResponse":
-        //         return "Reflective<CharacterResponse>";
-        //
-        //     // TailorItemRecipe
-        //     case "StardewValley.GameData.Crafting.TailorItemRecipe":
-        //         return "Reflective<TailorItemRecipe>";
-        //
-        //     // unimplemented type catch
-        //     default:
-        //         throw new XnbException($"Non-implemented type found, cannot resolve type \"{simple}\", \"${type}\".");
-        // }
-        /*  current main readers:
-            BmFont.XmlSourceReader
-            xTile.Pipeline.TideReader
-            Microsoft.Xna.Framework.Content.EffectReader
-            Microsoft.Xna.Framework.Content.SpriteFontReader
-            Microsoft.Xna.Framework.Content.Texture2DReader
-
-            Dictionary<int, string>
-            List<string>
-            Dictionary<string, string>
-
-            List<TailorItemRecipe>
-            List<MovieCharacterReaction>
-            List<ConcessionTaste>
-            List<FishPondData>
-            List<ConcessionItemData>
-            Dictionary<string, MovieData>
-        */
-
         StringBuilder fullType = new(simple);
 
         if (parsed.GenericArgs is not null)
         {
-            fullType.Append($"`{parsed.GenericArgs.Length}[").AppendJoin(',', parsed.GenericArgs.Select(generic => generic.Replace("StardewValley.GameData", "XnbReader.StardewValley"))).Append(']');
+            fullType.Append($"`{parsed.GenericArgs.Length}[").AppendJoin(',', parsed.GenericArgs).Append(']');
         }
 
         return fullType.ToString();

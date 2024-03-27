@@ -1,7 +1,7 @@
 using System.Text;
-using CommunityToolkit.HighPerformance.Buffers;
 using K4os.Compression.LZ4;
 using Serilog;
+using XnbReader.Buffers;
 using XnbReader.Decoder;
 using XnbReader.FileFormat;
 

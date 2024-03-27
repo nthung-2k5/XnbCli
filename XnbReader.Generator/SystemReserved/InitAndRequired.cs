@@ -42,5 +42,4 @@ public sealed class CompilerFeatureRequiredAttribute(string featureName) : Attri
 #else
 internal
 #endif
-    sealed class RequiredMemberAttribute : Attribute
-{ }
+    sealed class RequiredMemberAttribute : Attribute;

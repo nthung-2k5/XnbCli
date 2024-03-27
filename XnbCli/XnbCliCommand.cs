@@ -24,7 +24,7 @@ public class XnbCliCommand
                 }
 
                 using var stream = new XnbStream(File.OpenRead(input));
-                using var reader = new ContentReader(stream);
+                using var reader = new ContentReader(stream, new StardewValleyTypeResolver());
                 _ = reader.LoadObject();
                 // load the XNB and get the object from it
                 var xnb = stream.File;
@@ -46,7 +46,7 @@ public class XnbCliCommand
         }
     }
 
-    [CliCommand(Description = "Used to pack XNB files")]
+    [CliCommand(Description = "Used to pack XNB files (not supported)")]
     public class PackCommand : ActionCommand
     {
         protected override void ProcessFile(string input, string output)
@@ -55,7 +55,7 @@ public class XnbCliCommand
         }
     }
     
-    [CliCommand(Description = "Unpack all XNB files and read the first reader only")]
+    [CliCommand(Description = "Unpack XNB file and read the first reader only")]
     public class ListCommand: ActionCommand
     {
         protected override void ProcessFiles(string input, string? output)

@@ -8,7 +8,7 @@ namespace XnbReader.Generator.Model;
 
 /// <summary>
 /// Represents the set of input types and options needed to provide an
-/// implementation for a user-provided type with ClassReader attribute.
+/// implementation for a user-provided type with XnbReadable attribute.
 /// </summary>
 /// <remarks>
 /// Type needs to be cacheable as a Roslyn incremental value so it must be
@@ -31,7 +31,7 @@ public sealed record ReaderGenerationSpec
 
     public required ImmutableEquatableArray<TypeGenerationSpec> GeneratedTypes { get; init; }
         
-    public required ImmutableEquatableArray<TypeGenerationSpec> RootLevelTypes { get; init; }
+    public required ImmutableEquatableArray<RootTypeGenerationSpec> RootLevelTypes { get; init; }
 
     public required string? Namespace { get; init; }
 

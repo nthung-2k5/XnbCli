@@ -7,7 +7,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using EnumsNET;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -24,9 +23,8 @@ public sealed partial class XnbReaderGenerator
 
     private sealed partial class Parser(KnownTypeSymbols knownSymbols)
     {
-        
         private readonly HashSet<ITypeSymbol> discardReaderTypes = knownSymbols.DiscardReaderTypes ??= CreateDiscardReaderTypeSet(knownSymbols);
-        private readonly Queue<TypeToGenerate> typesToGenerate = new();
+        private readonly Queue<ITypeSymbol> typesToGenerate = new();
         private readonly Dictionary<ITypeSymbol, TypeGenerationSpec> generatedTypes = new(SymbolEqualityComparer.Default);
         
         public List<Diagnostic> Diagnostics { get; } = [];
@@ -42,12 +40,12 @@ public sealed partial class XnbReaderGenerator
             Debug.Assert(readerTypeSymbol != null);
             Debug.Assert(readerTypeSymbol.GetLocation() is not null);
 
-            ParseClassReaderAttributes(readerTypeSymbol, out var rootTypes);
+            ParseXnbReadableAttributes(readerTypeSymbol, out var rootTypes);
             
             if (rootTypes is null)
             {
-                // No types were annotated with ClassReaderAttribute.
-                // Can only be reached if a [ClassReader(null)] declaration has been made.
+                // No types were annotated with XnbReadableAttribute.
+                // Can only be reached if a [XnbReadable(null)] declaration has been made.
                 // Do not emit a diagnostic since a NRT warning will also be emitted.
                 return null;
             }
@@ -73,46 +71,26 @@ public sealed partial class XnbReaderGenerator
                 ReportDiagnostic(DiagnosticDescriptors.MustBePartial, readerClassDeclaration.Identifier.GetLocation(), readerTypeSymbol.Name);
                 return null;
             }
-
+            
             // Enqueue attribute data for spec generation
             foreach (var rootType in rootTypes)
             {
-                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.List) && TryGetListTypeSymbol(rootType, out var list))
-                {
-                    typesToGenerate.Enqueue(list.Value);
-                }
-                
-                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.IntKeyDictionary) && TryGetDictionaryTypeSymbol(knownSymbols.Int32Type, rootType, out var dictInt))
-                {
-                    typesToGenerate.Enqueue(dictInt.Value);
-                }
-
-                if (rootType.TypeReader.HasAllFlags(ContentTypeReader.StringKeyDictionary) && TryGetDictionaryTypeSymbol(knownSymbols.StringType, rootType, out var dictStr))
-                {
-                    typesToGenerate.Enqueue(dictStr.Value);
-                }
-                
-                if (rootType.TypeReader.HasAnyFlags(ContentTypeReader.SingleReader))
-                {
-                    typesToGenerate.Enqueue(rootType);
-                }
+                typesToGenerate.Enqueue(rootType.Type);
             }
-
-            var rootTypesToGenerate = typesToGenerate.Select(type => type.Type).ToArray();
             
             // Walk the transitive type graph generating specs for every encountered type.
             while (typesToGenerate.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var typeToGenerate = typesToGenerate.Dequeue();
-                if (!generatedTypes.ContainsKey(typeToGenerate.Type))
+                if (!generatedTypes.ContainsKey(typeToGenerate))
                 {
                     var spec = ParseTypeGenerationSpec(typeToGenerate);
-                    generatedTypes.Add(typeToGenerate.Type, spec);
+                    generatedTypes.Add(typeToGenerate, spec);
                 }
             }
             
-            var rootLevelTypes = rootTypesToGenerate.Select(type => generatedTypes[type]).ToImmutableEquatableArray();
+            var rootLevelTypes = rootTypes.Select(type => new RootTypeGenerationSpec { ReaderFormat = type.ReaderFormat, TypeGenSpec = generatedTypes[type.Type] }).ToImmutableEquatableArray();
             
             Debug.Assert(generatedTypes.Count > 0);
 
@@ -177,15 +155,13 @@ public sealed partial class XnbReaderGenerator
                 return spec.TypeRef;
             }
 
-            typesToGenerate.Enqueue(new TypeToGenerate(type));
+            typesToGenerate.Enqueue(type);
 
             return new TypeRef(type, discardReaderType);
         }
 
-        private TypeGenerationSpec? ParseTypeGenerationSpec(in TypeToGenerate typeToGenerate)
+        private TypeGenerationSpec? ParseTypeGenerationSpec(in ITypeSymbol type)
         {
-            (var type, _, string? readerFormat) = typeToGenerate;
-            
             if (type is INamedTypeSymbol { IsUnboundGenericType: true } or IErrorTypeSymbol)
             {
                 return null;
@@ -220,7 +196,7 @@ public sealed partial class XnbReaderGenerator
                 classType = ClassType.Enum;
                 underlyingType = EnqueueType((type as INamedTypeSymbol).EnumUnderlyingType);
             }
-            else if (TryResolveCollectionType(type, out var valueType, out var keyType, out collectionType, ref readerFormat))
+            else if (TryResolveCollectionType(type, out var valueType, out var keyType, out collectionType))
             {
                 if (collectionType == CollectionType.Unsupported)
                 {
@@ -229,11 +205,11 @@ public sealed partial class XnbReaderGenerator
                 }
                 
                 classType = keyType is not null ? ClassType.Dictionary : ClassType.Enumerable;
-                collectionValueType = EnqueueType(valueType.Value.Type);
+                collectionValueType = EnqueueType(valueType);
 
-                if (keyType.HasValue)
+                if (keyType is not null)
                 {
-                    collectionKeyType = EnqueueType(keyType.Value.Type);
+                    collectionKeyType = EnqueueType(keyType);
                 }
             }
             else if (type is INamedTypeSymbol { IsUnmanagedType: true } unmanagedType && !ContainsVariableSizedMember(unmanagedType))
@@ -259,11 +235,12 @@ public sealed partial class XnbReaderGenerator
 
                 constructionStrategy = constructor.Value.Strategy;
                 classType = ClassType.Object;
-                ctorParamSpecs = ParseConstructorParameters(typeToGenerate, constructor.Value);
+                Debug.Assert(!type.IsAbstract);
+                ctorParamSpecs = ParseConstructorParameters(constructor.Value);
 
                 if (constructionStrategy == ObjectConstructionStrategy.ParameterlessConstructor)
                 {
-                    propertySpecs = ParsePropertyGenerationSpecs(typeToGenerate);
+                    propertySpecs = ParsePropertyGenerationSpecs(type);
                 }
             }
 
@@ -278,29 +255,20 @@ public sealed partial class XnbReaderGenerator
                 CollectionValueType = collectionValueType,
                 ConstructionStrategy = constructionStrategy,
                 UnderlyingType = underlyingType,
-                ImplementsICustomReader = implementsICustomReader,
-                TypeFormat = typeToGenerate.ReaderFormat ?? readerFormat
+                ImplementsICustomReader = implementsICustomReader
             };
         }
 
         private bool TryResolveCollectionType(
             ITypeSymbol type,
-            [NotNullWhen(true)] out TypeToGenerate? valueType,
-            out TypeToGenerate? keyType,
-            out CollectionType collectionType,
-            ref string typeFormat)
+            [NotNullWhen(true)] out ITypeSymbol? valueType,
+            out ITypeSymbol? keyType,
+            out CollectionType collectionType)
         {
             INamedTypeSymbol? actualTypeToConvert;
             valueType = null;
             keyType = null;
             collectionType = CollectionType.Unsupported;
-            
-            if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, knownSymbols.MemoryOwnerType))
-            {
-                valueType = new TypeToGenerate(((INamedTypeSymbol)type).TypeArguments[0]);
-                collectionType = CollectionType.MemoryOwnerOfT;
-                return true;
-            }
 
             if (!knownSymbols.InterfaceEnumerableType.IsAssignableFrom(type))
             {
@@ -312,41 +280,31 @@ public sealed partial class XnbReaderGenerator
             {
                 //Debug.Assert(arraySymbol.Rank == 1, "multi-dimensional arrays should have been handled earlier.");
                 collectionType = arraySymbol.Rank == 1 ? CollectionType.Array : CollectionType.MultiArray;
-                valueType = new TypeToGenerate(arraySymbol.ElementType);
-                typeFormat = $"{ConstStrings.XnaFrameworkContentNamespace}.{collectionType.ToString()}Reader`1[{{Value}}]";
+                valueType = arraySymbol.ElementType;
             }
             else if ((actualTypeToConvert = type.GetCompatibleGenericBaseType(knownSymbols.ListOfTType)) != null)
             {
                 collectionType = CollectionType.List;
-                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[0]);
-                typeFormat = ConstStrings.ListReader;
+                valueType = actualTypeToConvert.TypeArguments[0];
             }
             else if ((actualTypeToConvert = type.GetCompatibleGenericBaseType(knownSymbols.DictionaryOfTKeyTValueType)) != null)
             {
                 collectionType = CollectionType.Dictionary;
-                keyType = new TypeToGenerate(actualTypeToConvert.TypeArguments[0]);
-                valueType = new TypeToGenerate(actualTypeToConvert.TypeArguments[1]);
-                typeFormat = ConstStrings.DictionaryReader;
+                keyType = actualTypeToConvert.TypeArguments[0];
+                valueType = actualTypeToConvert.TypeArguments[1];
+            }
+            else if (SymbolEqualityComparer.Default.Equals(type.OriginalDefinition, knownSymbols.MemoryOwnerType))
+            {
+                collectionType = CollectionType.MemoryOwnerOfT;
+                valueType = ((INamedTypeSymbol)type).TypeArguments[0];
             }
             else
             {
                 collectionType = CollectionType.Unsupported;
-                valueType = new TypeToGenerate(knownSymbols.ObjectType);
+                valueType = knownSymbols.ObjectType;
             }
 
             return true;
-        }
-
-        private bool TryGetDictionaryTypeSymbol(ITypeSymbol keyType, TypeToGenerate valueType, [NotNullWhen(true)] out TypeToGenerate? dictionary)
-        {
-            dictionary = knownSymbols.DictionaryOfTKeyTValueType is null ? null : valueType with { Type = knownSymbols.DictionaryOfTKeyTValueType?.Construct(keyType, valueType.Type), ReaderFormat = ConstStrings.DictionaryReader };
-            return dictionary is not null;
-        }
-        
-        private bool TryGetListTypeSymbol(TypeToGenerate valueType, [NotNullWhen(true)] out TypeToGenerate? list)
-        {
-            list = knownSymbols.ListOfTType is null ? null : valueType with { Type = knownSymbols.ListOfTType?.Construct(valueType.Type), ReaderFormat = ConstStrings.ListReader };
-            return list is not null;
         }
         
         private static bool IsUnsupportedType(ITypeSymbol type)
@@ -365,19 +323,21 @@ public sealed partial class XnbReaderGenerator
 
             foreach (var member in type.GetMembers())
             {
-                if (member is IPropertySymbol or IFieldSymbol)
+                if (member is not (IPropertySymbol or IFieldSymbol))
                 {
-                    var memberType = member.GetMemberType();
+                    continue;
+                }
 
-                    if (IsBuiltInSupportType(memberType))
-                    {
-                        return memberType.SpecialType == SpecialType.System_Char; // char can be 1 or 2 bytes in data, but always 2 bytes in memory
-                    }
+                var memberType = member.GetMemberType();
 
-                    if (ContainsVariableSizedMember(memberType))
-                    {
-                        return true;
-                    }
+                if (IsBuiltInSupportType(memberType))
+                {
+                    return memberType.SpecialType == SpecialType.System_Char; // char can be 1 or 2 bytes in data, but always 2 bytes in memory
+                }
+
+                if (ContainsVariableSizedMember(memberType))
+                {
+                    return true;
                 }
             }
 
@@ -410,8 +370,8 @@ public sealed partial class XnbReaderGenerator
             Diagnostics.Add(Diagnostic.Create(descriptor, location, symbolName));
         }
 
-        private bool IsDiscardReaderType(ITypeSymbol type) => discardReaderTypes.Contains(type.BaseType) || discardReaderTypes.Contains(type.OriginalDefinition);
+        private bool IsDiscardReaderType(ITypeSymbol type) => discardReaderTypes.Contains(type.OriginalDefinition);
 
-        public readonly record struct TypeToGenerate(ITypeSymbol Type, ContentTypeReader TypeReader = ContentTypeReader.StringKeyDictionary, string? ReaderFormat = null);
+        public readonly record struct TypeToGenerate(INamedTypeSymbol Type, string? ReaderFormat = null);
     }
 }

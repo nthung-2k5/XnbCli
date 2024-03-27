@@ -1,7 +1,7 @@
 ﻿// Taken from MonoGame
 
-using CommunityToolkit.HighPerformance.Buffers;
 using MemoryPack;
+using XnbReader.Buffers;
 
 namespace XnbReader.MonoGameShims.Helpers;
 

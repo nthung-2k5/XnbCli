@@ -84,7 +84,7 @@ internal static class RoslynExtensions
     }
 
     public static IEnumerable<IMethodSymbol> GetExplicitlyDeclaredInstanceConstructors(this INamedTypeSymbol type)
-        => type.Constructors.Where(ctor => !ctor.IsStatic && !(ctor.IsImplicitlyDeclared && type.IsValueType && ctor.Parameters.Length == 0));
+        => type.Constructors.Where(static ctor => !ctor.IsStatic && !(ctor.IsImplicitlyDeclared && ctor.ContainingType.IsValueType && ctor.Parameters.Length == 0));
 
     public static bool ContainsAttribute(this ISymbol memberInfo, INamedTypeSymbol? attributeType)
         => attributeType != null && memberInfo.GetAttributes().Any(attr => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, attributeType));
@@ -145,7 +145,7 @@ internal static class RoslynExtensions
 
         return null;
 
-        static bool IsMatchingGenericType(INamedTypeSymbol candidate, INamedTypeSymbol baseType)
+        static bool IsMatchingGenericType(INamedTypeSymbol candidate, ISymbol baseType)
         {
             return candidate.IsGenericType && SymbolEqualityComparer.Default.Equals(candidate.ConstructedFrom, baseType);
         }
@@ -225,7 +225,7 @@ internal static class RoslynExtensions
     /// <summary>
     /// Traverses a DAG and returns its nodes applying topological sorting to the result.
     /// </summary>
-    public static T[] TraverseGraphWithTopologicalSort<T>(T entryNode, Func<T, ICollection<T>> getChildren, IEqualityComparer<T>? comparer = null) where T : notnull
+    private static T[] TraverseGraphWithTopologicalSort<T>(T entryNode, Func<T, ICollection<T>> getChildren, IEqualityComparer<T>? comparer = null) where T : notnull
     {
         comparer ??= EqualityComparer<T>.Default;
 
@@ -250,7 +250,7 @@ internal static class RoslynExtensions
                 continue;
             }
 
-            var adjacencyRow = new bool[Math.Max(nodes.Count, count)];
+            bool[]? adjacencyRow = new bool[Math.Max(nodes.Count, count)];
             foreach (var childNode in children)
             {
                 if (!nodeIndex.TryGetValue(childNode, out int index))

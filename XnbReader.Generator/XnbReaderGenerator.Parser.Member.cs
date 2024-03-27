@@ -10,12 +10,12 @@ public sealed partial class XnbReaderGenerator
 {
     private sealed partial class Parser
     {
-        private List<PropertyGenerationSpec> ParsePropertyGenerationSpecs(in TypeToGenerate typeToGenerate)
+        private List<PropertyGenerationSpec> ParsePropertyGenerationSpecs(in ITypeSymbol typeToGenerate)
         {
             List<PropertyGenerationSpec> properties = [];
 
             // Walk the type hierarchy starting from the current type up to the base type(s)
-            foreach (var currentType in typeToGenerate.Type.GetSortedTypeHierarchy())
+            foreach (var currentType in typeToGenerate.GetSortedTypeHierarchy())
             {
                 var members = currentType.GetMembers();
 

@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 using System.Numerics;
-using CommunityToolkit.HighPerformance.Buffers;
+using XnbReader.Buffers;
 
 namespace XnbReader.MonoGameShims;
 

@@ -21,8 +21,6 @@ public sealed class TypeRef(ITypeSymbol type, bool discardReaderType = false) : 
     /// </summary>
     public string FullyQualifiedName { get; } = type.GetFullyQualifiedName();
 
-    public string FullName => SpecialType is >= SpecialType.System_Boolean and <= SpecialType.System_String ? SpecialType.ToString().Replace('_', '.') : FullyQualifiedName.Substring("global::".Length);
-    
     public string TypeInfoName { get; } = GetTypeInfoPropertyName(type);
 
     public bool IsValueType { get; } = type.IsValueType;
@@ -30,7 +28,6 @@ public sealed class TypeRef(ITypeSymbol type, bool discardReaderType = false) : 
     public bool IsDiscardReaderType { get; } = discardReaderType;
     
     public bool IsUnmanagedType { get; } = type.IsUnmanagedType;
-    public SpecialType SpecialType { get; } = type.OriginalDefinition.SpecialType;
 
     public bool Equals(TypeRef? other) => other != null && FullyQualifiedName == other.FullyQualifiedName;
     public override bool Equals(object? obj) => Equals(obj as TypeRef);

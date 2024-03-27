@@ -15,5 +15,5 @@ public enum ObjectConstructionStrategy
     /// <summary>
     /// Object should be created with a parameterized constructor.
     /// </summary>
-    ParameterizedConstructor = 1,
+    ParameterizedConstructor = 1
 }

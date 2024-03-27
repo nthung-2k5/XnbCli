@@ -48,7 +48,7 @@
  */
 #endregion
 
-using CommunityToolkit.HighPerformance.Buffers;
+using XnbReader.Buffers;
 
 namespace XnbReader.Decoder;
 

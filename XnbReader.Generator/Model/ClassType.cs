@@ -5,11 +5,11 @@ namespace XnbReader.Generator.Model;
 
 public enum ClassType
 {
-    Object = 0,
-    BuiltInSupportType = 1,
-    Enumerable = 2,
-    Dictionary = 3,
-    Nullable = 4,
-    Enum = 5,
-    Unmanaged = 6
+    Object,
+    BuiltInSupportType,
+    Enumerable,
+    Dictionary,
+    Nullable,
+    Enum,
+    Unmanaged
 }

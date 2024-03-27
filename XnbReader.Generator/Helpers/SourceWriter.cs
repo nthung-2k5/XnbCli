@@ -12,34 +12,34 @@ internal sealed class SourceWriter
 {
     private readonly StringBuilder sb = new();
 
-    public int Indentation { get; private set; }
+    private int indentation;
 
     public SourceWriter Indent(bool withBrace = true)
     {
         if (withBrace)
         {
-            WriteLine('{');
+            _ = WriteLine('{');
         }
 
-        ++Indentation;
+        ++indentation;
         return this;
     }
     
     public SourceWriter Dedent(bool withBrace = true)
     {
-        --Indentation;
+        --indentation;
         
         if (withBrace)
         {
-            WriteLine('}');
+            _ = WriteLine('}');
         }
         
         return this;
     }
 
-    public SourceWriter WriteLine(char value)
+    private SourceWriter WriteLine(char value)
     {
-        sb.AddIndentation(Indentation)
+        sb.AddIndentation(indentation)
           .Append(value)
           .AppendLine();
         return this;
@@ -47,7 +47,7 @@ internal sealed class SourceWriter
 
     public SourceWriter AddIndentation()
     {
-        sb.AddIndentation(Indentation);
+        sb.AddIndentation(indentation);
         return this;
     }
     
@@ -65,7 +65,7 @@ internal sealed class SourceWriter
 
     public SourceWriter WriteLine(string text)
     {
-        if (Indentation == 0)
+        if (indentation == 0)
         {
             sb.AppendLine(text);
         }
@@ -77,7 +77,7 @@ internal sealed class SourceWriter
             {
                 var nextLine = GetNextLine(ref remainingText, out isFinalLine);
 
-                sb.AddIndentation(Indentation)
+                sb.AddIndentation(indentation)
                   .AppendSpan(nextLine)
                   .AppendLine();
             }
@@ -93,17 +93,10 @@ internal sealed class SourceWriter
         return this;
     }
 
-    public SourceText ToSourceText()
+    private SourceText ToSourceText()
     {
-        Debug.Assert(Indentation == 0 && sb.Length > 0);
+        Debug.Assert(indentation == 0 && sb.Length > 0);
         return SourceText.From(sb.ToString(), Encoding.UTF8);
-    }
-
-    public SourceWriter Reset()
-    {
-        sb.Clear();
-        Indentation = 0;
-        return this;
     }
 
     private static ReadOnlySpan<char> GetNextLine(ref ReadOnlySpan<char> remainingText, out bool isFinalLine)
@@ -141,7 +134,7 @@ internal sealed class SourceWriter
     
     public SourceText CompleteSourceFileAndReturnText()
     {
-        while (Indentation > 0)
+        while (indentation > 0)
         {
             Dedent();
         }
