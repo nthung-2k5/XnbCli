@@ -15,8 +15,10 @@ public class XnbCliCommand
     {
         protected override void ProcessFile(string input, string output)
         {
+#if !DEBUG
             try
             {
+#endif
                 // ensure that the input file has the right extension
                 if (!Path.GetExtension(input).Equals(".xnb", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -25,7 +27,7 @@ public class XnbCliCommand
 
                 using var stream = new XnbStream(File.OpenRead(input));
                 using var reader = new ContentReader(stream, new StardewValleyTypeResolver());
-                _ = reader.LoadObject();
+                _ = reader.LoadObject(legacy: stream.File.Header.IsLegacy);
                 // load the XNB and get the object from it
                 var xnb = stream.File;
 
@@ -35,6 +37,7 @@ public class XnbCliCommand
 
                 // increase success count
                 Success++;
+#if !DEBUG
             }
             catch (Exception e)
             {
@@ -43,6 +46,7 @@ public class XnbCliCommand
                 // increase fail count
                 Failed++;
             }
+#endif
         }
     }
 

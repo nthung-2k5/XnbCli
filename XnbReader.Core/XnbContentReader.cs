@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Serilog;
@@ -7,11 +8,11 @@ namespace XnbReader;
 
 public abstract class XnbContentReader(XnbStream stream, TypeResolver resolver) : BinaryReader(stream)
 {
-    protected abstract object Read(string readerType);
+    protected abstract object Read(string readerType, bool legacy = false);
     
-    public object LoadObject(bool loadIntoXnbFile = true)
+    public object LoadObject(bool loadIntoXnbFile = true, bool legacy = false)
     {
-        content ??= Read(resolver.SimplifyType(stream.File.Readers[0].Type));
+        content ??= Read(resolver.SimplifyType(stream.File.Readers[0].Type), legacy);
         
         if (loadIntoXnbFile && stream.File.Content is null)
         {
@@ -29,7 +30,9 @@ public abstract class XnbContentReader(XnbStream stream, TypeResolver resolver) 
         int length = ReadInt32();
                                                   
         var array = GC.AllocateUninitializedArray<T>(length);
-        _ = Read(MemoryMarshal.AsBytes(array.AsSpan()));
+        int readLength = Read(MemoryMarshal.AsBytes(array.AsSpan()));
+        
+        Debug.Assert(length * Unsafe.SizeOf<T>() == readLength);
                                                   
         return array;
     }
@@ -38,8 +41,12 @@ public abstract class XnbContentReader(XnbStream stream, TypeResolver resolver) 
     {
         unsafe
         {
-            byte* temp = stackalloc byte[Unsafe.SizeOf<T>()];
-            _ = Read(new Span<byte>(temp, Unsafe.SizeOf<T>()));
+            int length = Unsafe.SizeOf<T>();
+            byte* temp = stackalloc byte[length];
+            int readLength = Read(new Span<byte>(temp, length));
+            
+            Debug.Assert(length == readLength);
+            
             return Unsafe.ReadUnaligned<T>(temp);
         }
     }
@@ -50,17 +57,19 @@ public abstract class XnbContentReader(XnbStream stream, TypeResolver resolver) 
         var memory = MemoryOwner<T>.Allocate(length);
                                                   
         var span = MemoryMarshal.AsBytes(memory.Span);
-        _ = Read(span);
+        int readLength = Read(span);
+        
+        Debug.Assert(length * Unsafe.SizeOf<T>() == readLength);
                                                   
         return memory;
     }
 
     public override char[] ReadChars(int count)
     {
-        int length = ReadInt32();
-                                                  
-        char[] array = GC.AllocateUninitializedArray<char>(length);
-        _ = Read(array);
+        char[] array = GC.AllocateUninitializedArray<char>(count);
+        int readLength = Read(array);
+        
+        Debug.Assert(count == readLength);
                                                   
         return array;
     }

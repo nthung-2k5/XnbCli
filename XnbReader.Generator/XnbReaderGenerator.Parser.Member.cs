@@ -50,9 +50,7 @@ public sealed partial class XnbReaderGenerator
 
             return properties;
 
-            void AddMember(
-                ITypeSymbol memberType,
-                ISymbol memberInfo)
+            void AddMember(ITypeSymbol memberType, ISymbol memberInfo)
             {
                 var propertySpec = ParsePropertyGenerationSpec(memberType, memberInfo);
 
@@ -66,9 +64,7 @@ public sealed partial class XnbReaderGenerator
             }
         }
 
-        private PropertyGenerationSpec? ParsePropertyGenerationSpec(
-            ITypeSymbol memberType,
-            ISymbol memberInfo)
+        private PropertyGenerationSpec? ParsePropertyGenerationSpec(ITypeSymbol memberType, ISymbol memberInfo)
         {
             Debug.Assert(memberInfo is IFieldSymbol or IPropertySymbol);
 

@@ -1,7 +1,7 @@
-﻿using System.Text.Encodings.Web;
+﻿using System.Runtime;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Serilog;
-using StbImageWriteSharp;
 using XnbCli.TextureHelper;
 using XnbReader.FileFormat;
 using XnbReader.MonoGameShims;
@@ -10,8 +10,6 @@ namespace XnbCli;
 
 public static class ExportAction
 {
-    private static readonly ImageWriter ImgWriter = new();
-
     public static void ExportFile(string filename, XnbFile xnb)
     {
         if (xnb.Content is null)
@@ -36,6 +34,8 @@ public static class ExportAction
         if (xnb.Content is IDisposable disposable)
         {
             disposable.Dispose();
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect();
         }
     }
 
@@ -69,7 +69,6 @@ public static class ExportAction
             case Texture2D tex:
                 ExportTextureAndDispose(tex, stream);
                 break;
-
             case SpriteFont spr:
                 ExportTextureAndDispose(spr.Texture, stream);
                 content = new ExternalSpriteFont(spr, Path.GetFileName(outputFilename));
@@ -90,7 +89,7 @@ public static class ExportAction
 
     private static void ExportTextureAndDispose(Texture2D tex, Stream stream)
     {
-        ImgWriter.Write(tex, stream);
+        tex.WriteTo(stream);
         tex.Dispose();
     }
 }

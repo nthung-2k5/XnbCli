@@ -7,8 +7,6 @@ using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if NET6_0_OR_GREATER
-#endif
 
 namespace XnbReader.Buffers;
 
@@ -144,7 +142,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            T[]? array = this.array;
+            var array = this.array;
 
             if (array is null)
             {
@@ -163,7 +161,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
-            T[]? array = this.array;
+            var array = this.array;
 
             if (array is null)
             {
@@ -171,7 +169,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
             }
 
 #if NET6_0_OR_GREATER
-            ref T r0 = ref array!.DangerousGetReferenceAt(start);
+            ref var r0 = ref array!.DangerousGetReferenceAt(start);
 
             // On .NET 6+ runtimes, we can manually create a span from the starting reference to
             // skip the argument validations, which include an explicit null check, covariance check
@@ -202,7 +200,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T DangerousGetReference()
     {
-        T[]? array = this.array;
+        var array = this.array;
 
         if (array is null)
         {
@@ -226,7 +224,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ArraySegment<T> DangerousGetArray()
     {
-        T[]? array = this.array;
+        var array = this.array;
 
         if (array is null)
         {
@@ -252,7 +250,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
     /// </remarks>
     public MemoryOwner<T> Slice(int start, int length)
     {
-        T[]? array = this.array;
+        var array = this.array;
 
         if (array is null)
         {
@@ -284,7 +282,7 @@ public sealed class MemoryOwner<T> : IMemoryOwner<T>, IEnumerable<T>
     /// <inheritdoc/>
     public void Dispose()
     {
-        T[]? array = this.array;
+        var array = this.array;
 
         if (array is null)
         {

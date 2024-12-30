@@ -265,7 +265,7 @@ public sealed partial class XnbReaderGenerator
         
         private static void GenerateStaticCustomReaderInvocation(SourceWriter writer, TypeGenerationSpec typeGenerationSpec)
         {
-            writer.WriteLine($"return {typeGenerationSpec.TypeRef.FullyQualifiedName}.Read(this);");
+            writer.WriteLine($"return {typeGenerationSpec.TypeRef.FullyQualifiedName}.Read(this, legacy);");
         }
         
         private static SourceText GenerateForUnmanaged(ReaderGenerationSpec readerSpec, TypeGenerationSpec typeMetadata)
@@ -279,7 +279,7 @@ public sealed partial class XnbReaderGenerator
         private static SourceText GetRootClassReaderImplementation(ReaderGenerationSpec readerSpec)
         {
             var writer = readerSpec.CreateSourceWriterWithReaderHeader()
-                                   .WriteLine("protected override object Read(string readerType)")
+                                   .WriteLine("protected override object Read(string readerType, bool legacy = false)")
                                    .Indent()
                                    .WriteLine("_ = Read7BitEncodedInt(); // discard reader, because we know what the type is")
                                    .WriteLine("switch (readerType)")
@@ -289,7 +289,7 @@ public sealed partial class XnbReaderGenerator
             {
                 writer.WriteLine($"""
                                   case {SymbolDisplay.FormatLiteral(rootType.ReaderFormat, true)}:
-                                      return {rootType.TypeGenSpec.CreateTypeInfoMethodName()}();
+                                      return {rootType.TypeGenSpec.CreateTypeInfoMethodName()}(legacy);
                                   """);
             }
             
@@ -362,7 +362,7 @@ file static class SourceWriterExtensions
     
     public static SourceWriter GenerateTypeInfoFactoryHeader(this SourceWriter writer, TypeGenerationSpec typeMetadata)
     {
-        return writer.WriteLine($"protected {typeMetadata.TypeRef.FullyQualifiedName} {CreateTypeInfoMethodName(typeMetadata)}()").Indent();
+        return writer.WriteLine($"protected {typeMetadata.TypeRef.FullyQualifiedName} {CreateTypeInfoMethodName(typeMetadata)}(bool legacy = false)").Indent();
     }
     
     /// <summary>

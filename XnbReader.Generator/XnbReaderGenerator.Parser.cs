@@ -370,7 +370,7 @@ public sealed partial class XnbReaderGenerator
             Diagnostics.Add(Diagnostic.Create(descriptor, location, symbolName));
         }
 
-        private bool IsDiscardReaderType(ITypeSymbol type) => discardReaderTypes.Contains(type.OriginalDefinition);
+        private bool IsDiscardReaderType(ITypeSymbol type) => discardReaderTypes.Contains(type.OriginalDefinition) || discardReaderTypes.Contains(type.BaseType);
 
         public readonly record struct TypeToGenerate(INamedTypeSymbol Type, string? ReaderFormat = null);
     }

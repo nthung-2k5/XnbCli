@@ -1,18 +1,15 @@
 ﻿// Taken from MonoGame
 
-using MemoryPack;
 using XnbReader.Buffers;
 
 namespace XnbReader.MonoGameShims.Helpers;
 
 internal static class DxtUtil
 {
-    public static MemoryOwner<byte> Decompress(ReadOnlySpan<byte> imageSpan, int width, int height, SurfaceFormat format)
+    public static MemoryOwner<byte> Decompress(BinaryReader imageReader, int width, int height, SurfaceFormat format)
     {
         var imageData = MemoryOwner<byte>.Allocate(width * height * 4);
-
-        var reader = new MemoryPackReader(imageSpan, MemoryPackReaderOptionalStatePool.Rent(MemoryPackSerializerOptions.Default));
-
+        
         int blockCountX = (width + 3) / 4;
         int blockCountY = (height + 3) / 4;
 
@@ -28,17 +25,17 @@ internal static class DxtUtil
         {
             for (int x = 0; x < blockCountX; x++)
             {
-                func(ref reader, x, y, width, height, imageData.Span);
+                func(imageReader, x, y, width, height, imageData.Span);
             }
         }
 
         return imageData;
     }
 
-    private static void DecompressDxt1Block(scoped ref MemoryPackReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
+    private static void DecompressDxt1Block(BinaryReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
     {
-        Span<ushort> c = new ushort[2];
-        imageReader.ReadSpanWithoutReadLengthHeader(2, ref c);
+        Span<ushort> c = stackalloc ushort[2];
+        imageReader.ReadUnmanagedArray(c);
 
         ConvertRgb565ToRgb888(c[0], out byte r0, out byte g0, out byte b0);
         ConvertRgb565ToRgb888(c[1], out byte r1, out byte g1, out byte b1);
@@ -121,13 +118,13 @@ internal static class DxtUtil
         }
     }
 
-    private static void DecompressDxt3Block(ref MemoryPackReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
+    private static void DecompressDxt3Block(BinaryReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
     {
-        Span<byte> alpha = new byte[8];
-        imageReader.ReadSpanWithoutReadLengthHeader(8, ref alpha);
+        Span<byte> alpha = stackalloc byte[8];
+        imageReader.ReadUnmanagedArray(alpha);
 
-        Span<ushort> c = new ushort[2];
-        imageReader.ReadSpanWithoutReadLengthHeader(2, ref c);
+        Span<ushort> c = stackalloc ushort[2];
+        imageReader.ReadUnmanagedArray(c);
 
         ConvertRgb565ToRgb888(c[0], out byte r0, out byte g0, out byte b0);
         ConvertRgb565ToRgb888(c[1], out byte r1, out byte g1, out byte b1);
@@ -205,18 +202,18 @@ internal static class DxtUtil
         }
     }
 
-    private static void DecompressDxt5Block(ref MemoryPackReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
+    private static void DecompressDxt5Block(BinaryReader imageReader, int x, int y, int width, int height, Span<byte> imageData)
     {
-        Span<byte> alpha = new byte[2];
-        imageReader.ReadSpanWithoutReadLengthHeader(2, ref alpha);
+        Span<byte> alpha = stackalloc byte[2];
+        imageReader.ReadUnmanagedArray(alpha);
 
         Span<byte> mask = stackalloc byte[8];
-        imageReader.ReadSpanWithoutReadLengthHeader(6, ref alpha);
+        imageReader.ReadUnmanagedArray(alpha);
 
         ulong alphaMask = BitConverter.ToUInt64(mask);
 
-        Span<ushort> c = new ushort[2];
-        imageReader.ReadSpanWithoutReadLengthHeader(2, ref c);
+        Span<ushort> c = stackalloc ushort[2];
+        imageReader.ReadUnmanagedArray(c);
 
         ConvertRgb565ToRgb888(c[0], out byte r0, out byte g0, out byte b0);
         ConvertRgb565ToRgb888(c[1], out byte r1, out byte g1, out byte b1);
@@ -236,19 +233,15 @@ internal static class DxtUtil
                 {
                     case 0:
                         a = alpha[0];
-
                         break;
                     case 1:
                         a = alpha[1];
-
                         break;
                     case 6:
                         a = 0;
-
                         break;
                     case 7:
                         a = 0xff;
-
                         break;
                     default:
                     {
@@ -260,7 +253,6 @@ internal static class DxtUtil
                         {
                             a = (byte)(((6 - alphaIndex) * alpha[0] + (alphaIndex - 1) * alpha[1]) / 5);
                         }
-
                         break;
                     }
                 }
@@ -314,5 +306,5 @@ internal static class DxtUtil
         b = (byte)((temp / 32 + temp) / 32);
     }
 
-    private delegate void DecompressBlockDelegate(ref MemoryPackReader imageReader, int x, int y, int width, int height, Span<byte> imageData);
+    private delegate void DecompressBlockDelegate(BinaryReader imageReader, int x, int y, int width, int height, Span<byte> imageData);
 }

@@ -39,7 +39,7 @@ using XnbReader.StardewValley.WorldMaps;
 
 namespace XnbCli;
 
-[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, IncludeFields = true)]
 [JsonSerializable(typeof(XnbFile))]
 [JsonSerializable(typeof(ExternalSpriteFont))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
