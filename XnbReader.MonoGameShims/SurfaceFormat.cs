@@ -1,8 +1,11 @@
-﻿namespace XnbReader.MonoGameShims;
+﻿using NetEscapades.EnumGenerators;
+
+namespace XnbReader.MonoGameShims;
 
 /// <summary>
 ///     Defines types of surface formats.
 /// </summary>
+[EnumExtensions]
 public enum SurfaceFormat
 {
 	/// <summary>

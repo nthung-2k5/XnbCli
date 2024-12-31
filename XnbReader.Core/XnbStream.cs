@@ -207,6 +207,9 @@ public sealed class XnbStream: Stream
             case 0x1:
                 Log.Debug("XNB Format Version: XNA Game Studio 1.0");
                 break;
+            case 0x2:
+                Log.Debug("XNB Format Version: XNA Game Studio 2.0");
+                break;
             case 0x3:
                 Log.Debug("XNB Format Version: XNA Game Studio 3.0");
                 break;

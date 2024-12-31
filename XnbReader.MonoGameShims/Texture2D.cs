@@ -19,7 +19,8 @@ public record Texture2D(SurfaceFormat Format, int Width, int Height, MemoryOwner
     public static Texture2D Read(BinaryReader reader, bool legacy = false)
     {
         int formatValue = reader.ReadInt32();
-        var surfaceFormat = legacy ? Enum.Parse<SurfaceFormat>(((LegacySurfaceFormat)formatValue).ToString()) : (SurfaceFormat)formatValue;
+        var surfaceFormat = legacy ? SurfaceFormatExtensions.Parse(((SurfaceFormatLegacy)formatValue).ToStringFast()) : (SurfaceFormat)formatValue;
+
         int width = reader.ReadInt32();
         int height = reader.ReadInt32();
         int levelCount = reader.ReadInt32();

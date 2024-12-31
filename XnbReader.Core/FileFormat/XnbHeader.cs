@@ -5,7 +5,7 @@ namespace XnbReader.FileFormat;
 public record XnbHeader(char Target, byte FormatVersion, bool HiDef, XnbFlag Flag)
 {
     [JsonIgnore]
-    public bool IsLegacy => FormatVersion == 1;
+    public bool IsLegacy => FormatVersion < 0x5;
     
     [JsonIgnore]
     public bool Compressed => Flag >= XnbFlag.Lz4;
